@@ -49,12 +49,12 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
   named.
 - **Names are the instrument's own**, sentence case: never "Elements", the hidden voice's name,
   "Mutable Instruments", "MATHS", "Make Noise" or "Plaits" (`no_name_is_the_originals`). The
-  models are *Modal*, *String*, *Strings* and *Dark FM*. *Env n input* is the plan's and the DSP's
-  word for what Follow follows, which the conventions name as one to avoid: the owner's to settle.
-  A name is free to change; the freeze holds its id (`env<n>_input`).
+  models are *Modal*, *String*, *Strings* and *Dark FM*. The Follow mode's target reads *Env n
+  follow* (the owner, 2026-11-05), its id `env<n>_input` as frozen.
 - **Readings**: `mxm_params::text` where it has one; Model reads its name, Coarse and Fine signed
   semitones (Coarse ±36, Fine ±2, the module's), Volume (stored linear) decibels, a Rate hertz (a
-  typed division picks its position), times by `params::time_text`.
+  typed division picks its position), times by the kit's
+  `text::tenths_of_milliseconds_then_seconds`.
 
 ## Init, smoothing, sync
 

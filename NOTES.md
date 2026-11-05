@@ -14,6 +14,12 @@ it was designed from, is ops' `plans/plan-elements.md`; Pi reviewed it in three 
 - **2026-11-05: A free crate too.** *"And a free rust crate too"*: the port is
   `mxm-audio/mxm-modal-voice` (MIT, as the code it is ported from), bit identical to Elements' C++
   and held there by 106 reference cases; this repository takes it by its `main`, locked.
+- **2026-11-05: The open points.** On the recommendations put to them, *"go"*: kept as they are,
+  the hidden voice's dry drone ending with its note, the 30 s guard on a string that never decays,
+  and one soft limit for all the voices (the DSP's `NOTES.md` has each); the Follow mode's target
+  reads *Env n follow*, its id `env<n>_input` as frozen; the time reading moved into the kit,
+  `mxm_params::text::tenths_of_milliseconds_then_seconds`, with MXM Thanks EG's and mxm-mono-pr1's
+  copies.
 - **2026-11-05: Public.** *"commit push and publis this synth too"*, then, asked whether the voice
   goes with it (a public repository builds alone from a fresh clone, and this one takes the voice
   from GitHub): *"Publish both"*. Both repositories are public; nothing is released until version
@@ -135,16 +141,3 @@ value's name is (the hosts key on ids). The host tests then open, through today'
 saved at the freeze with every parameter moved (`tests/fixtures/frozen-2026-11-05.*`, written once
 by the ignored `write_the_frozen_state`, which refuses to write it again). Both checks were made to
 fail (a range's end changed in the table; a value in the saved state) before they were kept.
-
-## Open points, for the owner
-
-- **The hidden voice's dry drone ends with its note**, 10 ms after its gated outputs fall silent; on
-  the module it drones while the voice runs. A recorded deviation (the DSP's `NOTES.md`).
-- **A string with Damping at its top never decays**; the instrument fades a released note out 30 s
-  after its key went up. A guard, not a design.
-- **One soft limit for all the voices**, as the module has for its one: chords of sustained sounds
-  are flattened by it. Kept, because one voice must be the module's part to the bit; a per-voice
-  headroom would change that.
-- **"Env n input"** names the Follow mode's target as the plan and the DSP do, though the
-  conventions say a target is never called *Input*. A name, so free to change after the freeze.
-- **Copies the kit could hold**: the time reading. The route slots stay copies by ruling.

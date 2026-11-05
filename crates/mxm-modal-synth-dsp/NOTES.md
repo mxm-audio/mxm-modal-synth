@@ -23,7 +23,8 @@ and a gain of one is `x × 1`, so one voice sounding is the module's part to the
 **What one soft limit means for chords**: the module's levels are set for one voice at full scale,
 so four held notes of a bowed or blown sound sum well into the limit, which then flattens them.
 That is the module's sound four times over, and the instrument keeps it; the factory set balances
-its sustained sounds by their exciters' levels for it (the plugin's `NOTES.md`).
+its sustained sounds by their exciters' levels for it (the plugin's `NOTES.md`). Kept by the owner
+(2026-11-05).
 
 ## The gate a block after the controls
 
@@ -52,14 +53,15 @@ The module's hidden voice puts its oscillators, ungated, on the raw output, whic
 below Space 0.1; on the module it drones for as long as the voice runs. A released note here ends
 once the voice's gated outputs have been silent for the idle time, the drone fading over 10 ms
 (`the_hidden_voices_dry_drone_ends_with_its_note`). Without it, any note at low Space on model 3
-would never end. While the key is held the drone sounds, as on the module.
+would never end. While the key is held the drone sounds, as on the module. Kept by the owner
+(2026-11-05).
 
 ## The guard
 
 A string with Damping at its top crossfades to an infinite decay and never ends on its own. A
 released note still sounding 30 s after its key went up, its envelopes at rest, is faded over
 10 ms and stopped (`a_sound_that_never_ends_is_ended_thirty_seconds_after_its_release`): a guard,
-not a design.
+not a design, kept by the owner (2026-11-05).
 
 ## Choices copied with the envelopes and LFOs
 

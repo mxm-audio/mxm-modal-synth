@@ -103,19 +103,19 @@ const fn target_name(target: Target) -> &'static str {
         Target::Envelope1Time => "Env 1 time",
         Target::Envelope1Cycle => "Env 1 cycle",
         Target::Envelope1Trigger => "Env 1 trigger",
-        Target::Envelope1Input => "Env 1 input",
+        Target::Envelope1Input => "Env 1 follow",
         Target::Envelope2Rise => "Env 2 rise",
         Target::Envelope2Fall => "Env 2 fall",
         Target::Envelope2Time => "Env 2 time",
         Target::Envelope2Cycle => "Env 2 cycle",
         Target::Envelope2Trigger => "Env 2 trigger",
-        Target::Envelope2Input => "Env 2 input",
+        Target::Envelope2Input => "Env 2 follow",
         Target::Envelope3Rise => "Env 3 rise",
         Target::Envelope3Fall => "Env 3 fall",
         Target::Envelope3Time => "Env 3 time",
         Target::Envelope3Cycle => "Env 3 cycle",
         Target::Envelope3Trigger => "Env 3 trigger",
-        Target::Envelope3Input => "Env 3 input",
+        Target::Envelope3Input => "Env 3 follow",
     }
 }
 
