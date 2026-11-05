@@ -1,0 +1,18 @@
+[package]
+name = "mxm-modal-synth-dsp"
+description = "MXM Modal Synth's instrument: eight voices of the ported modal voice, their envelopes, LFOs and route slots, and the resampler"
+version.workspace = true
+edition.workspace = true
+# Framework-free: the ported voice and the collection's routing, both below the GUI floor.
+rust-version = "1.88"
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+mxm-modal-voice.workspace = true
+mxm-modulation.workspace = true
+
+[dev-dependencies]
+mxm-measure.workspace = true
+mxm-modulation = { workspace = true, features = ["conformance"] }

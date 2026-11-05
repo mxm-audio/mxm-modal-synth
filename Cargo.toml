@@ -1,0 +1,63 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/mxm-modal-synth-dsp",
+    "plugins/mxm-modal-synth",
+    "plugins/mxm-modal-synth/host-tests",
+    "xtask",
+]
+# The fast tier: `cargo build` and `cargo test` here never build MXM Player; `cargo test
+# --workspace` adds the host tests (the slow tier).
+default-members = [
+    "crates/mxm-modal-synth-dsp",
+    "plugins/mxm-modal-synth",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"        # the GUI floor; crates that do not need it override downward
+license = "GPL-3.0-or-later"
+authors = ["mxm"]
+repository = "https://github.com/mxm-audio/mxm-modal-synth"
+
+[workspace.dependencies]
+# Pinned exactly, as in every MXM repository; Cargo.lock is committed. Own crates by path; the
+# kit's, the player's and the port's (mxm-modal-voice) from their `main`, locked.
+egui = "=0.36.1"
+mxm-control-map = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-editor = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-modal-voice = { git = "https://github.com/mxm-audio/mxm-modal-voice", branch = "main" }
+mxm-measure = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-modulation = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-modulation-params = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-params = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-player = { git = "https://github.com/mxm-audio/mxm-player", branch = "main" }
+mxm-player-harness = { git = "https://github.com/mxm-audio/mxm-player", branch = "main" }
+mxm-plugin-test = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-preset = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-rng = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-telemetry = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-tempo = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-modal-synth-dsp = { path = "crates/mxm-modal-synth-dsp" }
+mxm-ui = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-xtask = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+nice-plug = { version = "=0.4.2", default-features = false, features = ["editor", "assert_process_allocs"] }
+nice-plug-egui = { version = "=0.5.1", default-features = false, features = ["opengl"] }
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
+
+# The port is tested bit for bit, so their tests run optimised: a debug build of the same
+# arithmetic gives the same bits (no fast-math anywhere), only slower.
+[profile.dev.package.mxm-modal-voice]
+opt-level = 3
+
+# nice-plug, egui-baseview and nice-plug-egui as published, plus the patches in each fork's
+# PATCHES.md, as every MXM repository that builds a plugin patches them.
+[patch.crates-io]
+nice-plug = { git = "https://github.com/mxm-audio/nice-plug", branch = "main" }
+egui-baseview = { git = "https://github.com/mxm-audio/egui-baseview", branch = "main" }
+nice-plug-egui = { git = "https://github.com/mxm-audio/nice-plug-egui", branch = "main" }

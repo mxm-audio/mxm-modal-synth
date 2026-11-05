@@ -1,0 +1,51 @@
+[package]
+name = "mxm-modal-synth"
+description = "A polyphonic modal synthesizer: bars, plates, strings and tubes, struck, bowed and blown, with function-generator envelopes, LFOs and sixteen route slots"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+# `lib` as well as `cdylib`: the shipped artifact is the `cdylib`. Do not enable nice-plug's
+# `standalone` feature here: it pulls in cpal and JACK, and Cargo's feature unification would put
+# them in the shipped `.clap`.
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# The instrument: voices, envelopes, LFOs, the route slots and the resampler, behind the interface
+# in its `src/lib.rs`.
+mxm-modal-synth-dsp.workspace = true
+# `vst3` exports the VST3 as well as the CLAP. `unsafe_flush_denormals` sets flush-to-zero around
+# `process`, as the voice's reference was rendered (mxm-modal-voice's AGENTS.md).
+nice-plug = { workspace = true, features = ["vst3", "unsafe_flush_denormals"] }
+# `ErasedParam` for the preset system, and the collection's value text.
+mxm-params.workspace = true
+# The preset system: Init, the factory set, the browser's library, a host's preset discovery.
+mxm-preset.workspace = true
+# The LFOs' tempo sync: the one ladder and the tempo in force.
+mxm-tempo.workspace = true
+# The output meter and the developer channel's requests of the editor.
+mxm-telemetry.workspace = true
+# The editor: its window (`mxm-editor`), the collection's widgets, theme, paging and keyboard cursor
+# (`mxm-ui`), and the route rows' track minimum (`mxm-modulation-params`, its `ui` only).
+mxm-editor.workspace = true
+mxm-ui.workspace = true
+mxm-modulation-params.workspace = true
+egui.workspace = true
+
+[dev-dependencies]
+# The collection's shared headless checks: the VST3 class id and categories, the bundle's name, the
+# host's text round trip, the host description's words.
+mxm-plugin-test.workspace = true
+# `control-map.json` read against the standard, as a host reads it.
+mxm-control-map.workspace = true
+# `wgpu` renders a frame to pixels for the layout-tree review pictures
+# (`mxm_plugin_test::tree_checks`, `editor::proof::tree_pictures`), and kittest drives the editor
+# through its accessibility tree. Test-only: nothing here reaches the bundle. Pinned as the lock has
+# them.
+egui_kittest = { version = "=0.36.1", features = ["wgpu"] }
+image = { version = "=0.25.9", default-features = false, features = ["png"] }
+kittest = "=0.4.0"

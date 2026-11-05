@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "MXM Modal Synth's collection roles. Only controls whose meaning matches a role are claimed.",
+    "osc1.wave is Model, what sounds (the modal resonator, the string, the strings, the dark FM",
+    "voice); osc1.tune is Coarse, the pitch about the note.",
+    "fx.reverb is Space: more of it spreads the voice, then adds the room's reverb.",
+    "No envelope role: Contour shapes the exciters' envelope, and no envelope reaches the sound",
+    "until a route aims one there. No filter role: Brightness and Damping are the resonator's, and",
+    "it is not a filter.",
+    "voice.note_priority is the voice mode (Poly, Mono, Legato), a key assign.",
+    "No route amount is claimed: a slot moves with its routing, so no knob could keep one meaning.",
+    "lfo1.sync and lfo2.sync stay empty, as on every instrument until the collection maps syncs."
+  ],
+  "instruments": [
+    {
+      "clap_id": "dk.mxm.mxm-modal-synth",
+      "name": "mxm-modal-synth",
+      "params": {
+        "osc1.wave": "model",
+        "osc1.tune": "coarse",
+
+        "lfo1.rate": "lfo1_rate",
+        "lfo1.shape": "lfo1_shape",
+        "lfo2.rate": "lfo2_rate",
+        "lfo2.shape": "lfo2_shape",
+
+        "voice.glide": "glide",
+        "voice.bend_range": "bend_range",
+        "voice.note_priority": "mode",
+        "voice.output": "volume",
+
+        "fx.reverb": "space"
+      }
+    }
+  ]
+}
