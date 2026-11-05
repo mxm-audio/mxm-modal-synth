@@ -1,6 +1,6 @@
 # MXM Modal Synth
 
-A polyphonic modal synthesizer, CLAP and VST3: bars, plates, strings and tubes, struck, bowed and
+A polyphonic modal synthesizer, CLAP and VST®3: bars, plates, strings and tubes, struck, bowed and
 blown, with envelopes that are function generators too, LFOs and sixteen modulation slots. Its
 voice is ported to Rust from Emilie Gillet's code for Mutable Instruments Elements, which she
 published under the MIT licence. She has no part in this product and does not endorse it.
@@ -18,4 +18,5 @@ Pre-alpha: nothing is released, and the repository is private until it is ready.
 ## Licence
 
 GPL-3.0-or-later (`LICENSE`), with the MIT-licensed code it is ported from named in `NOTICE.md`.
-The MXM name and logo are not covered by the licence: see `TRADEMARKS.md`.
+The MXM name and logo are not covered by the licence: see `TRADEMARKS.md`. VST is a registered
+trademark of Steinberg Media Technologies GmbH.

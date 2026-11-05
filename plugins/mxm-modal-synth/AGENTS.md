@@ -76,14 +76,19 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
 
 ## Events and the callback
 
-- NoteOn with velocity and note id (velocity 0 is a NoteOff); NoteOff (a key-less one goes to every
-  held key); Choke (`Key::Wildcard` is every note); `MidiPitchBend` (−1…1); CC 1 the wheel; channel
-  pressure; `PolyTuning` by note (non-finite, or key-less, dropped); CC 120 chokes every note, CC
-  123 lets every held key go. Per-note pressure and the other expressions fall through.
+- NoteOn with velocity and note id (velocity 0 is a NoteOff); NoteOff and Choke by key, or, key-less,
+  by note id, a wildcard being every note; `MidiPitchBend` (−1…1); CC 1 the wheel; channel
+  pressure; `PolyTuning` by key or, key-less, by note id (non-finite, or a wildcard, dropped);
+  CC 120 chokes every note, CC 123 lets every held key go. Per-note pressure and the other
+  expressions fall through. The instrument's side is `note_ids_pick_their_voice`.
 - **Split at every event and capped at `MAX_BLOCK`**; events at the end, and in an empty buffer,
   apply before the next sample. Nothing allocates in `process` or `reset`.
 - **The latency is `Instrument::latency_samples()`, reported in `activate`**, after
-  `set_sample_rate`; fixed for the activation (none at 32 kHz).
+  `set_sample_rate`; fixed for the activation (none at 32 kHz). **`activate` refuses a rate outside
+  `HOST_RATES`** (8 kHz to 1.536 MHz), which the resampler would play at the wrong speed. A
+  served rate is taken to the whole hertz: a fractional one plays at most 0.5 Hz off, 62 ppm at
+  8 kHz and 11 at 44.1 (0.1 cent at most), inside an interface's own clock tolerance; refusing it
+  would leave the plugin unloaded in such a host.
 - **`KeepAlive` while `Instrument::is_sounding()`, else `Normal`.** No `Tail(n)`: a resonator, a
   cycling envelope on an exciter or the reverb's tail sounds with no key held, so no tail length is
   honest.
@@ -98,8 +103,8 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
   parameter's own units; the ignored `write_the_factory_presets` writes the files and `order.txt`,
   and `the_shipped_files_are_the_design` fails when they differ. At least fifty (61), each with its
   category, every model with one (`every_model_has_a_sound`), names short, sentence case and the
-  set's own; the order a first impression, then `Category::ALL`'s. **Their listening is owed
-  (E5).**
+  set's own; the order a first impression, then `Category::ALL`'s (sorted in `design`). **Their
+  listening is owed (E5).**
 - **The set's levels are `tests/factory_levels.rs`**: each file loaded as a host loads it, played
   as its category is (at 120 bpm), its BS.1770 momentary loudness at its loudest within `WINDOW_LU`
   of the set's median, no sample past full scale, and silent within `ENDS_WITHIN` of its key going
@@ -126,11 +131,13 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
   the card of what it moves), the drum machine's shape: the target's line offers `‹ modulate ›`; a
   choice takes a free slot in one bracketed gesture, one this target had first, else
   `Routes::first_free`. **A slot not in use is on no card.** With all sixteen in use every line
-  reads `route_rows::FULL`, disabled, and offers nothing.
+  reads `route_rows::FULL`, disabled, and offers nothing. **`‹ modulate ›` is a cursor stop** under
+  a key of its own (`route_rows::modulate_key`, `mxm_ui::navigation::at`): MENU opens its list, ↑ ↓
+  and Enter pick; the cursor's coverage lists it while it offers a source.
 - **It opens on one page with every card**: `REFERENCE` (1821 × 1080) is the budget hugged
   (`the_opening_size_is_the_budget_hugged`), ten points wider than that check's figure
-  (`the_window_opens_on_one_page_with_every_card`). A card holds at most five target lines, so the
-  second row stays under the envelopes' first. `MINIMUM` is the app bar's last compact step.
+  (`the_window_opens_on_one_page_with_every_card`). A card after the LFOs holds at most five
+  target lines, so the second row stays under the first, the envelopes' six. `MINIMUM` is the app bar's last compact step.
 - Step laws: Coarse and Bend range `Semitones`, the rest their own. Every knob is Standard.
 - CC 118 asks for an expander this editor has not got: taken, and nothing changes. CC 119's 127 is
   the developer Parameters list, every parameter by its full name.

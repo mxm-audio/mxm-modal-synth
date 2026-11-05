@@ -30,8 +30,15 @@ fn hostile_sample_rates_and_every_block_size_stay_finite_and_bounded() {
     let Some(bundle) = bundle() else {
         return;
     };
+    // A rate the resampler does not serve is refused, never played at the wrong speed.
+    for rate in [1_000.0, 7_999.0, 2_000_000.0] {
+        assert!(
+            Harness::with_configuration(&bundle, PLUGIN, 1, rate, 8192).is_err(),
+            "{rate} Hz is refused"
+        );
+    }
     for rate in [
-        1_000.0, 1_234.57, 44_100.0, 48_000.0, 96_000.0, 192_000.0, 768_000.0,
+        8_000.0, 11_025.0, 44_100.0, 48_000.0, 96_000.0, 192_000.0, 768_000.0,
     ] {
         let mut host = Harness::with_configuration(&bundle, PLUGIN, 1, rate, 8192).expect("hosts");
         for key in [0, 60, 127] {

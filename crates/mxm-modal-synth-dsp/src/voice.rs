@@ -6,8 +6,9 @@
 //!
 //! Per engine block of 16 samples, in order (the crate's `AGENTS.md`, *The routing*): the
 //! performance sources, the LFOs, envelopes 1, 2 and 3, then the voice's targets, the voice's
-//! render, and last its exciter envelope as the *Contour* source, which every reader so reads one
-//! block late.
+//! render, its exciter envelope published as the *Contour* source, and last its gains. So every
+//! target of the patch and every envelope reads Contour a block late; Amplitude and Pan, the gains
+//! the part applies to this block, read this block's.
 
 use mxm_modal_voice::dsp::{K_MAX_BLOCK_SIZE, K_SAMPLE_RATE};
 use mxm_modal_voice::resources::{LUT_MIDI_TO_F_HIGH, LUT_MIDI_TO_F_LOW};
@@ -590,8 +591,9 @@ impl Voice {
             self.silent = 0;
         }
         let ended = self.quiet > 0 && self.silent >= SILENT_BLOCKS && self.envelopes_at_rest(r);
+        // The fade: this block was rendered at `gain`; the voice stops only once a block has
+        // reached zero, so the fade ends on silence rather than on its last step.
         if let Some((gain, guard)) = self.ending {
-            let gain = gain - DT / GUARD_FADE;
             if gain <= 0.0 {
                 self.active = false;
                 self.ending = None;
@@ -602,7 +604,7 @@ impl Voice {
                 #[cfg(not(test))]
                 let _ = guard;
             } else {
-                self.ending = Some((gain, guard));
+                self.ending = Some(((gain - DT / GUARD_FADE).max(0.0), guard));
             }
         } else if ended {
             if drone {

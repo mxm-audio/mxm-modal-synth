@@ -49,6 +49,11 @@ move. No new widget.
   sits under the envelopes' first and all twelve open on one page, as Thanks EG's do. Pan and
   Amplitude, which have no knob, sit on Voice, where how loud each voice sounds and where belongs.
 - **Which free slot a choice takes, and the full line**: Thanks EG's (its `NOTES.md`).
+- **`‹ modulate ›` from the keyboard** (the owner, 2026-11-05: "Fix it in the kit now", on Pi's
+  review): the picker is not a parameter, so the cursor could not reach it, here, in the drum
+  machine or in Thanks EG, and a first route needed the mouse. It is now a stop with a key of its
+  own (`route_rows::modulate_key`), and the kit's selectors open their list on MENU, ↑ ↓ and Enter
+  picking (`a_route_is_added_from_the_keyboard`).
 
 ## The factory set
 

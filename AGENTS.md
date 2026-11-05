@@ -17,7 +17,8 @@ slots; 105 parameters.
 
 Pre-alpha (2026-11-05): the research and the harness (E1), the port with its 106 cases bit for
 bit (E2), the instrument (E3) and the plugin with its editor, factory sounds and control map (E4)
-are built, and pass their checks, the host tests and `clap-validator` included. **Owed**: the
+are built, and pass their checks, the host tests included, and `clap-validator` but for its
+three known Windows preset-path failures (below). **Owed**: the
 resampler's move into mxm-kit (E3, the owner's word to push the kit), a run in Bitwig (E4), and
 E5, the owner's: listening, then the freeze. Private until it is ready; after version 1.0 of the
 MXM collection.

@@ -296,7 +296,8 @@ impl Plugin for MxmModalSynth {
         context: &mut impl ActivateContext<Self>,
     ) -> bool {
         let rate = buffer_config.sample_rate;
-        if !rate.is_finite() || rate <= 0.0 {
+        // A rate the resampler does not serve would play at the wrong speed: refused.
+        if !mxm_modal_synth_dsp::HOST_RATES.contains(&rate) {
             return false;
         }
         self.instrument.set_sample_rate(rate);
@@ -788,6 +789,64 @@ mod tests {
         }
         process(&mut plugin, 2, 64, [silent], None);
         assert_eq!(plugin.held[70], 0);
+    }
+
+    /// **A key-less event names its note by id**: NoteOff and Choke reach the voice playing it, and
+    /// PolyTuning retunes it; an id no voice has, or a wildcard tuning, changes nothing. Read in the
+    /// sound, which is deterministic: a bowed note rendered with and without the event.
+    #[test]
+    fn a_key_less_event_names_its_note_by_id() {
+        let id = |id| VoiceID::ID(id);
+        let off = |voice_id| NoteEvent::NoteOff {
+            timing: 0,
+            voice_id,
+            channel: Channel::Number(0),
+            key: Key::Wildcard,
+            velocity: 0.0,
+        };
+        let choke = |voice_id| NoteEvent::Choke {
+            timing: 0,
+            voice_id,
+            channel: Channel::Number(0),
+            key: Key::Wildcard,
+        };
+        let tuning = |voice_id| NoteEvent::PolyTuning {
+            timing: 0,
+            voice_id,
+            channel: Channel::Number(0),
+            key: Key::Wildcard,
+            tuning: 7.0,
+        };
+        let played = |then: Option<NoteEvent<()>>| -> Vec<f32> {
+            let (mut plugin, _) = activated(48_000.0);
+            // SAFETY: the parameters are this test's alone.
+            unsafe {
+                nice_plug::params::InternalParamMut::_internal_set_plain_value(
+                    &plugin.params.bow,
+                    0.6,
+                )
+            };
+            let mut on = note_on(0, 60);
+            if let NoteEvent::NoteOn { voice_id, .. } = &mut on {
+                *voice_id = id(7);
+            }
+            let mut out = Vec::new();
+            out.extend(process(&mut plugin, 1, 4_800, [on], None).0.remove(0));
+            out.extend(process(&mut plugin, 1, 48_000, then, None).0.remove(0));
+            out
+        };
+        let held = played(None);
+        for event in [off(id(7)), choke(id(7)), tuning(id(7))] {
+            assert_ne!(played(Some(event)), held, "{event:?} reaches note 7");
+        }
+        for event in [
+            off(id(8)),
+            choke(id(8)),
+            tuning(id(8)),
+            tuning(VoiceID::Wildcard),
+        ] {
+            assert_eq!(played(Some(event)), held, "{event:?} changes nothing");
+        }
     }
 
     /// **The status is the instrument's**: `Normal` once silent, otherwise its tail, or

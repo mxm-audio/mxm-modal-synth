@@ -186,7 +186,7 @@ fn every_slot_on(params: &ModalSynthParams, target: Target) {
 /// Every id the keyboard may reach: the parameters, but a slot's target, which the card it sits
 /// on is, and which adding the route writes.
 fn reachable_ids(params: &ModalSynthParams, with_routes: bool) -> Vec<&'static str> {
-    params
+    let mut ids: Vec<&'static str> = params
         .all_parameters()
         .into_iter()
         .map(|(id, _)| id)
@@ -198,7 +198,14 @@ fn reachable_ids(params: &ModalSynthParams, with_routes: bool) -> Vec<&'static s
                 true
             }
         })
-        .collect()
+        .collect();
+    // Every target's `‹ modulate ›` while it offers a source, and none once the slots are full.
+    for target in Target::ALL {
+        if !route_rows::offered(&params.routes, target).is_empty() {
+            ids.push(Box::leak(route_rows::modulate_key(target).into_boxed_str()));
+        }
+    }
+    ids
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -305,6 +312,10 @@ fn every_binding_has_a_sentence_and_every_cell_its_own() {
             bound.param.steps().map(|s| s + 1),
             "{id}: a sentence for each cell"
         );
+    }
+    // A signed depth rests at the centre, in the Parameters list as on a route row.
+    for [_, _, amount] in crate::routes::ROUTE_IDS {
+        assert!(cards::binding_for(amount, &params).bipolar, "{amount}");
     }
 }
 
@@ -850,8 +861,9 @@ fn adding_a_route_takes_a_free_slot_in_one_gesture() {
     );
 }
 
-/// **What a card offers is what it can still take**: never a source already on that target, and
-/// nothing anywhere once all sixteen slots are in use.
+/// **What a card offers is what it can still take**: never a source already on that target, never
+/// one the standard refuses on it (a gesture into a gate), and nothing anywhere once all sixteen
+/// slots are in use.
 #[test]
 fn a_card_offers_what_it_can_still_take() {
     let params = ModalSynthParams::default();
@@ -860,6 +872,15 @@ fn a_card_offers_what_it_can_still_take() {
         route_rows::offered(routes, Target::Brightness).len(),
         Source::ALL.len()
     );
+    let gate = route_rows::offered(routes, Target::Envelope1Trigger);
+    for source in Source::ALL {
+        assert_eq!(
+            gate.contains(&source),
+            Target::Envelope1Trigger.offer(source) != mxm_modal_synth_dsp::Offer::Refused,
+            "{source:?} into a Trigger"
+        );
+    }
+    assert!(!gate.contains(&Source::Wheel) && gate.contains(&Source::Lfo1));
     route(&params, 0, Source::Lfo1, Target::Brightness, 0.2);
     assert!(!route_rows::offered(routes, Target::Brightness).contains(&Source::Lfo1));
     assert!(route_rows::offered(routes, Target::Damping).contains(&Source::Lfo1));
@@ -1193,6 +1214,54 @@ fn a_switch_a_toggle_a_knob_and_volume_each_emit_one_balanced_gesture() {
     }
     harness.run_steps(2);
     host.assert_gesture("Volume");
+}
+
+/// **A route is added from the keyboard**: the cursor on a target's `‹ modulate ›`, MENU opens its
+/// list, ↓ and Enter pick its first source, and the free slot is written in one gesture, as a click
+/// on the row would write it.
+#[test]
+fn a_route_is_added_from_the_keyboard() {
+    let params = Arc::new(ModalSynthParams::default());
+    let telemetry = Arc::new(Telemetry::default());
+    let host = Arc::new(ApplyingHost::default());
+    let mut harness = editor_harness(
+        Arc::clone(&params),
+        telemetry,
+        Arc::clone(&host),
+        reference(),
+    );
+    harness.run_steps(3);
+    // `‹ modulate ›` on Pan's line, on the Voice card.
+    harness
+        .get(
+            By::new()
+                .label("Pan: modulate")
+                .role(egui::accesskit::Role::ComboBox),
+        )
+        .focus();
+    harness.run_steps(2);
+    harness.key_press(key_of(keyboard_checks::MENU));
+    harness.run_steps(3);
+    harness.key_press(egui::Key::ArrowDown);
+    harness.run_steps(2);
+    harness.key_press(egui::Key::Enter);
+    harness.run_steps(3);
+    let first = route_rows::offered(&ModalSynthParams::default().routes, Target::Pan)[0];
+    assert_eq!(
+        params.routes.route1.source.value(),
+        SourceChoice(Some(first))
+    );
+    assert_eq!(
+        params.routes.route1.target.value(),
+        TargetChoice(Some(Target::Pan))
+    );
+    // One gesture: both opened before the first value and closed after the last.
+    let names = ["Route 1 source", "Route 1 target"];
+    let expected: Vec<(&str, String)> = ["begin", "set", "end"]
+        .into_iter()
+        .flat_map(|action| names.map(|name| (action, name.to_owned())))
+        .collect();
+    assert_eq!(host.calls(), expected);
 }
 
 /// **A route row's remove is one write**: the source off, the target and the depth kept.

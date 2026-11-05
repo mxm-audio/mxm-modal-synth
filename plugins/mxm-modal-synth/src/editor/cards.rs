@@ -728,9 +728,10 @@ fn law_of(id: &str) -> StepLaw {
     }
 }
 
-/// Whether its rest is the centre: a signed amount or a tune.
+/// Whether its rest is the centre: a signed amount (a Response, a route's depth) or a tune.
 fn bipolar(id: &str) -> bool {
-    matches!(id, "coarse" | "fine") || matches!(place(id), Place::Envelope(_, 4))
+    matches!(id, "coarse" | "fine")
+        || matches!(place(id), Place::Envelope(_, 4) | Place::Route(_, 2))
 }
 
 /// **Every parameter's binding**: its control, its sentence, what it paints, its step law.

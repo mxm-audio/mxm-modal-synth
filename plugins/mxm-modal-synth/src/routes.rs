@@ -1,6 +1,6 @@
 //! Sixteen route slots, each a source, a target and an amount (`route<r>_{source,target,amount}`):
 //! mxm-drum-machine's scheme (the owner, 2026-09-30: the host holds what the panel can show at
-//! once), in place of a presence and an amount for every one of the DSP's 19 sources × 32 targets.
+//! once), in place of a presence and an amount for every one of the DSP's 19 sources × 40 targets.
 //!
 //! **The lists are the DSP's.** A source is `Off` or one of `mxm_modal_synth_dsp::Source::ALL`, a
 //! target `Off` or one of `Target::ALL`, in their order: [`SourceChoice`] and [`TargetChoice`]
@@ -119,7 +119,7 @@ const fn target_name(target: Target) -> &'static str {
 }
 
 /// A target's stable id, which a saved state stores.
-const fn target_id(target: Target) -> &'static str {
+pub(crate) const fn target_id(target: Target) -> &'static str {
     match target {
         Target::Pitch => "pitch",
         Target::Strength => "strength",

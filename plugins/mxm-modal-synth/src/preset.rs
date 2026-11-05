@@ -219,7 +219,9 @@ mod tests {
         /// **The sound's own level**, in decibels from the module's accent: Envelope 3, held for
         /// the note, into Strength at `dB / 30` (the accent spans 30 dB across Strength's range,
         /// `10^(1.5 (s − 0.5))`), so the exciters are played harder or softer and the set is
-        /// balanced in the sound, never by Volume. The accent returns to rest within 0.3 s of the
+        /// balanced in the sound, never by Volume. Strength stops at its top, +15 dB; a larger
+        /// value only reaches it sooner while the envelope rises, which is when a strike lands
+        /// (`Plectrum tick`'s 20). The accent returns to rest within 0.3 s of the
         /// release: a strike is over by then and a sustained exciter only fades the sooner, but
         /// one cut by the accent would swell, so a bowed or blown sound is never cut by it (its
         /// levels and its contour set it; `designed` holds that).
@@ -275,8 +277,9 @@ mod tests {
     const STRINGS: usize = 2;
     const DARK: usize = 3;
 
-    /// **The factory sounds, readable**, in the browser's order: a first impression, then by
-    /// category. Every model has sounds that show what it does best: the modal resonator struck,
+    /// **The factory sounds, readable**: a first impression, then by category, sorted into
+    /// `Category::ALL`'s order for the browser (stable, so each category keeps the order written
+    /// here; `the_browser_order_is_a_first_impression_then_the_categories`). Every model has sounds that show what it does best: the modal resonator struck,
     /// bowed and blown, the string plucked and bowed, the strings' chords, the dark FM voice; the
     /// modulation the instrument adds to the module is shown off along the way, each such sound
     /// saying what it shows. Each one's loudness is held by `tests/factory_levels.rs`, and is set
@@ -750,6 +753,9 @@ mod tests {
                 .touch()
                 .route(Velocity, Damping, 0.3),
         ];
+        let mut sounds = sounds;
+        let rank = |c: Category| Category::ALL.iter().position(|&a| a == c);
+        sounds[1..].sort_by_key(|s| rank(s.category));
         sounds.into_iter().map(Sound::designed).collect()
     }
 
@@ -877,6 +883,14 @@ mod tests {
             let name = Preset::parse(&json, crate::CLAP_ID).unwrap().name;
             assert_eq!(mxm_preset::loaded(&params).name(), Some(name.as_str()));
         }
+    }
+
+    /// **The browser's order is a first impression, then `Category::ALL`'s.**
+    #[test]
+    fn the_browser_order_is_a_first_impression_then_the_categories() {
+        let rank = |c: Category| Category::ALL.iter().position(|&a| a == c);
+        let ranks: Vec<_> = design().iter().skip(1).map(|(_, c, _)| rank(*c)).collect();
+        assert!(ranks.windows(2).all(|w| w[0] <= w[1]), "{ranks:?}");
     }
 
     /// `order.txt` names every file once, and nothing else.

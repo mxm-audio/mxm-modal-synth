@@ -37,6 +37,9 @@ use voices::Voices;
 pub const ENGINE_RATE: f32 = 32_000.0;
 /// Models: modal, string, strings, the hidden voice.
 pub const MODELS: i32 = 4;
+/// The host rates the resampler serves, in Hz: [`Instrument::set_sample_rate`] ignores any other,
+/// and the plugin refuses to activate at one, rather than play at the wrong speed.
+pub const HOST_RATES: std::ops::RangeInclusive<f32> = 8_000.0..=1_536_000.0;
 /// Voices in Poly mode.
 pub const VOICES: usize = 8;
 /// Route slots.
@@ -385,13 +388,16 @@ enum Event {
     TuningId(i32, f32),
 }
 
-/// Events kept between two renders; past it the oldest are applied at once.
+/// Events kept between two renders. Past it the kept ones are applied at once, under the last
+/// render's settings, so nothing is lost: only more than 256 events at one sample reach it, as the
+/// plugin renders at every event's sample.
 const EVENTS: usize = 256;
 
 /// The instrument: everything is allocated in [`Instrument::new`]; nothing after.
 ///
-/// A note event (an on, an off, a choke, a tuning) takes effect at the next [`Instrument::render`],
-/// under the settings that call brings; the expressions (bend, wheel, pressure) at once.
+/// A note event (an on, an off, a choke, a tuning) takes effect at the next engine block, under
+/// the settings the latest [`Instrument::render`] brought; the expressions (bend, wheel, pressure)
+/// at once.
 pub struct Instrument {
     host_rate: f32,
     telemetry: Telemetry,
@@ -443,7 +449,7 @@ impl Instrument {
 
     /// From the plugin's `activate`: the host's rate. Prepares the resampler; may allocate.
     pub fn set_sample_rate(&mut self, host_rate: f32) {
-        if !host_rate.is_finite() || host_rate <= 0.0 {
+        if !HOST_RATES.contains(&host_rate) {
             return;
         }
         self.host_rate = host_rate;
@@ -566,10 +572,11 @@ impl Instrument {
         self.apply_events();
     }
 
-    /// Renders `left.len()` host samples (`right` the same length).
+    /// Renders `left.len()` host samples (`right` the same length). The settings are taken in
+    /// first; the queued events wait for the next engine block, which applies them under the
+    /// settings it plays, however many calls drain the frames of the block before it.
     pub fn render(&mut self, settings: &Settings, left: &mut [f32], right: &mut [f32]) {
         self.absorb(settings);
-        self.apply_events();
         let n = left.len().min(right.len());
         let mut peak = 0.0f32;
         if let Some(mut resampler) = self.resampler.take() {
@@ -641,6 +648,7 @@ impl Instrument {
     /// One engine block: the shared sources and LFOs, every sounding voice into the part, the
     /// part's frames read back as samples, Volume.
     fn render_block(&mut self) {
+        self.apply_events();
         let s = &self.settings;
         let from = self.volume.unwrap_or(s.volume);
         let to = match self.volume {
@@ -655,6 +663,13 @@ impl Instrument {
         g.write(Source::Pressure.index(), self.pressure);
         g.write(Source::Bend.index(), self.bend);
         let mut lfos = [0.0; LFOS];
+        // An LFO each voice runs for itself is not a shared source: zero, never the last value it
+        // had while it was shared.
+        for l in 0..LFOS {
+            if s.lfos[l].retrigger {
+                g.write(Source::lfo(l).index(), 0.0);
+            }
+        }
         for (l, value) in lfos.iter_mut().enumerate() {
             let ls = &s.lfos[l];
             if !ls.retrigger {

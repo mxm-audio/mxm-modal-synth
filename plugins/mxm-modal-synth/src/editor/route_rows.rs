@@ -13,14 +13,14 @@
 use std::collections::HashMap;
 
 use egui::Ui;
-use mxm_modal_synth_dsp::{SLOTS, Source, Target};
+use mxm_modal_synth_dsp::{Offer, SLOTS, Source, Target};
 use mxm_ui::control::{self, ParamView, Steps, Wheel};
 use mxm_ui::space::SPACE_2;
 use mxm_ui::theme::Tokens;
 use nice_plug::prelude::*;
 
 use super::binding::{self, Bound, ErasedParam};
-use crate::routes::{ROUTE_IDS, RouteParams, Routes, SourceChoice, TargetChoice};
+use crate::routes::{ROUTE_IDS, RouteParams, Routes, SourceChoice, TargetChoice, target_id};
 
 /// What a target's line offers while a slot is free.
 pub const MODULATE: &str = "modulate";
@@ -29,6 +29,14 @@ pub const FULL: &str = "all 16 in use";
 
 /// What a target's line says on hover once every slot is in use.
 const FULL_DESCRIPTION: &str = "All sixteen routes are in use. Remove one to add another here.";
+
+/// **`‹ modulate ›`'s stop for the keyboard cursor**: not a parameter, it acts on one (the free slot
+/// it takes), so it has a key of its own, named for its target (`mxm_ui::navigation::at`). MENU
+/// opens its list, ↑ ↓ and Enter pick; VALUE and an arrow take the first source.
+#[must_use]
+pub fn modulate_key(target: Target) -> String {
+    format!("modulate {}", target_id(target))
+}
 
 /// A target's index in the DSP's list, which keys its routes' leaf.
 #[must_use]
@@ -103,8 +111,9 @@ pub fn free_slot(routes: &Routes, target: Target) -> Option<usize> {
         .or_else(|| routes.first_free())
 }
 
-/// The sources `‹ modulate ›` offers on `target`: every one not already moving it, while a slot
-/// is free; none once all sixteen are in use.
+/// The sources `‹ modulate ›` offers on `target`: every one that can move it (the standard's
+/// [`Target::offer`]: no gesture into a gate) and is not already moving it, while a slot is free;
+/// none once all sixteen are in use.
 #[must_use]
 pub fn offered(routes: &Routes, target: Target) -> Vec<Source> {
     if free_slot(routes, target).is_none() {
@@ -117,7 +126,7 @@ pub fn offered(routes: &Routes, target: Target) -> Vec<Source> {
         .collect();
     Source::ALL
         .into_iter()
-        .filter(|source| !on.contains(&Some(*source)))
+        .filter(|source| target.offer(*source) != Offer::Refused && !on.contains(&Some(*source)))
         .collect()
 }
 
@@ -220,7 +229,8 @@ pub fn stack(
 }
 
 /// The target's line: its name and `‹ modulate ›`, offering the sources it can still take; **once
-/// all sixteen slots are in use it says so**, `‹ all 16 in use ›`, and offers nothing.
+/// all sixteen slots are in use it says so**, `‹ all 16 in use ›`, and offers nothing. With a slot
+/// free and every source that can move it already on it, `‹ modulate ›` is disabled.
 fn line(
     ui: &mut Ui,
     tokens: &Tokens,
@@ -232,6 +242,8 @@ fn line(
     let panel = panel_name(target);
     let name = canonical(target);
     if offered.is_empty() {
+        let full = free_slot(routes, target).is_none();
+        let description = format!("Every source that can move {name} already does.");
         ui.add_enabled_ui(false, |ui| {
             let mut chosen = 0usize;
             control::selector_named(
@@ -239,11 +251,11 @@ fn line(
                 tokens,
                 panel,
                 name,
-                &[FULL],
+                &[if full { FULL } else { MODULATE }],
                 &mut chosen,
                 None,
                 None,
-                FULL_DESCRIPTION,
+                if full { FULL_DESCRIPTION } else { &description },
             );
         });
         return;
@@ -257,17 +269,19 @@ fn line(
         .collect();
     let mut chosen = 0usize;
     let description = format!("Adds a modulation source to {name}.");
-    let changed = control::selector_named(
-        ui,
-        tokens,
-        panel,
-        name,
-        &labels,
-        &mut chosen,
-        None,
-        Some(0),
-        &description,
-    );
+    let changed = mxm_ui::navigation::at(ui, &modulate_key(target), |ui| {
+        control::selector_named(
+            ui,
+            tokens,
+            panel,
+            name,
+            &labels,
+            &mut chosen,
+            None,
+            Some(0),
+            &description,
+        )
+    });
     if changed && chosen > 0 {
         add(routes, target, offered[chosen - 1], setter);
     }

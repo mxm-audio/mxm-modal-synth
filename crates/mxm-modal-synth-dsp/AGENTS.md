@@ -35,9 +35,10 @@ reaches, the grid), `resampler.rs`, `settings.rs` (the kept settings). Tests: `s
   a released key returns to the one held before it, without one. A change of mode releases every
   voice. Glide (time to within 1 %, exponential): in Poly from the last note played, in Mono from
   where the voice is, in Legato on a tie only.
-- **Note events wait for the next `render`** (a fixed queue of 256), which takes in its settings
-  first: an event acts at the next engine block either way, and so under the settings that block
-  plays. An event naming a note id acts on the voice playing it; one without, or on a voice
+- **Note events wait for the next engine block** (a fixed queue of 256), which applies them under
+  the settings it plays, the latest `render` took in, however many calls drain the block before
+  it. Past 256 at one sample the kept ones apply at once, under the last render's settings;
+  none is dropped. An event naming a note id acts on the voice playing it; one without, or on a voice
   without one, on its key. A non-finite velocity is 1; a non-finite tuning is dropped; a new note
   clears the tuning.
 - **A voice is the module with the case around it.** Per engine block of 16 samples at 32 kHz:
@@ -57,13 +58,15 @@ reaches, the grid), `resampler.rs`, `settings.rs` (the kept settings). Tests: `s
   (its oscillators, heard raw at Space under 0.1, ungated on the module) fades over 10 ms once its
   gated outputs have been silent that long: a recorded deviation, NOTES.md. **A released note
   always ends**: one still sounding 30 s after its key went up (a string with Damping at its top
-  never decays) fades over 10 ms and stops. The next note starts an idle voice as `init` leaves
+  never decays) fades over 10 ms and stops. A fade's last block reaches zero before the voice
+  stops. The next note starts an idle voice as `init` leaves
   it; `reset` clears every voice and the part.
 - Velocity (`v − 1`, how far below the hardest note) and Random (`2u − 1`) are drawn per untied
   note; Key is the glided note on a
   60-semitone unit, middle C 0; Wheel and Pressure 0 to 1, Bend the lever −1 to 1
   (`mxm_modulation::standard`). **Contour** is the exciter's envelope (the hidden voice's, on
-  model 3), published after the render, so every reader reads it a block late.
+  model 3), published after the render: the patch's targets and the envelopes read it a block
+  late, Amplitude and Pan, the gains applied to that block, this block's.
 
 ## The part
 
@@ -122,9 +125,10 @@ depth rises linearly from 0 over the fade time after each note. Output −1 to 1
   pair add; an amount is kept to ±1. **A pair the standard refuses is not filled**
   (`Target::offer`: a gesture into a Cycle or Trigger gate).
 - **Each block, in order**: the performance sources, the LFOs, envelopes 1, 2, 3, then the voice's
-  targets, the render, and the Contour source. A source read before it is computed this block reads
-  last block's value, so any loop (an envelope triggering itself, a ring) is deterministic and one
-  block, 0.5 ms, late. Every source is published every block, so nothing owes a `clear`.
+  targets, the render, the Contour source, and the gains. A source read before it is computed this
+  block reads last block's value, so any loop (an envelope triggering itself, a ring) is
+  deterministic and one block, 0.5 ms, late. Every source is published every block, a per-voice
+  LFO as zero in the shared frame, so nothing owes a `clear`.
 - **Reaches** (amount ±1, [`reach`]): Pitch ±12 st; Model ±3 models (one slot reaches every one
   from any); Space ±2 (the module's CV range, past the freeze); Amplitude `×0…×2` (the standard's
   law); a Rate ±4 octaves; envelope times as above; every other target its whole range (a control,
@@ -134,7 +138,8 @@ depth rises linearly from 0 over the fade time after each note. Output −1 to 1
 
 MXM Thanks EG's, its source the voices' 32 kHz: a fixed polyphase Kaiser-windowed sinc to the host's
 rate, passband to 14.4 kHz (0.45 of 32 kHz; the module stops at 16), stopband from the lower Nyquist
-at least 100 dB down, history cleared on `reset`; host rates 44.1 to 192 kHz (any rate works).
+at least 100 dB down, history cleared on `reset`; **host rates 8 kHz to 1.536 MHz** (`HOST_RATES`):
+`set_sample_rate` ignores any other, and the plugin refuses to activate at one.
 **Its latency is fixed**: 100 host samples at 44.1 kHz, 108 at 48, 216 at 96, 432 at 192. **At
 32 kHz bypassed, with no latency.** It is this crate's copy: **moving it into mxm-kit, as the plan
 asks, needs the owner's word to push the kit's public `main`**, and waits for it.

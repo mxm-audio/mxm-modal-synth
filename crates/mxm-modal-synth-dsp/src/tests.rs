@@ -238,6 +238,18 @@ fn the_hidden_voices_dry_drone_ends_with_its_note() {
     let (l, _) = render(&mut instrument, &settings, 3_200);
     assert!(l.iter().any(|&x| x.abs() > 0.01), "the drone is heard");
     instrument.note_off(45, None);
+    // Block by block until the voice stops: the fade's last block reaches zero.
+    let mut blocks = 0;
+    loop {
+        block(&mut instrument, &settings);
+        blocks += 1;
+        assert!(blocks <= 20_000, "the voice still runs");
+        let voice = &instrument.voices.voices[0];
+        if !voice.active {
+            assert_eq!(voice.output.to, [0.0, 0.0], "the fade ends on silence");
+            break;
+        }
+    }
     let mut seconds = 0;
     while sounding(&instrument) > 0 {
         render(&mut instrument, &settings, 32_000);
@@ -245,6 +257,45 @@ fn the_hidden_voices_dry_drone_ends_with_its_note() {
         assert!(seconds <= 10, "still sounding");
     }
     assert_eq!(instrument.voices.voices[0].guarded, 0);
+}
+
+/// **A note waits for its engine block and plays under its settings**: queued while the frames
+/// of a block already made are drained, in Mono, it is applied when the next block starts, after a
+/// render has switched to Poly, so the change of mode does not release it before it sounds.
+#[test]
+fn a_note_waits_for_its_block_and_its_settings() {
+    let mono = Settings {
+        mode: Mode::Mono,
+        ..Settings::default()
+    };
+    let poly = Settings::default();
+    let mut instrument = Instrument::new();
+    render(&mut instrument, &mono, 1);
+    instrument.note_on(60, 1.0, None);
+    render(&mut instrument, &mono, 1);
+    render(&mut instrument, &poly, BLOCK);
+    render(&mut instrument, &poly, BLOCK);
+    assert!(
+        instrument.voices.voices.iter().any(|v| v.active && v.gate),
+        "the note is held under Poly"
+    );
+}
+
+/// **A per-voice LFO is not a shared source**: turning LFO 1's Retrigger on publishes it as zero
+/// in the shared frame, so a shared LFO whose Rate it moved is no longer moved by a frozen value.
+#[test]
+fn a_per_voice_lfo_publishes_zero_to_the_shared_ones() {
+    let mut settings = Settings {
+        slots: slots(&[(Source::Lfo1, Target::Lfo2Rate, 1.0)]),
+        ..Settings::default()
+    };
+    settings.lfos[0].rate_hz = 3.0;
+    let mut instrument = Instrument::new();
+    render(&mut instrument, &settings, 1_000);
+    assert_ne!(instrument.global.read(Source::Lfo1.index()), 0.0);
+    settings.lfos[0].retrigger = true;
+    block(&mut instrument, &settings);
+    assert_eq!(instrument.global.read(Source::Lfo1.index()), 0.0);
 }
 
 /// Every slot of a set, alternating ±1.
@@ -766,6 +817,11 @@ fn the_host_rate_is_the_32_khz_stream_resampled() {
         resampled.set_sample_rate(rate);
         assert_eq!(resampled.latency_samples(), latency, "{rate}");
         assert_eq!(resampled.sample_rate(), rate);
+    }
+    // A rate the resampler does not serve is ignored, never played at the wrong speed.
+    for rate in [1_000.0, 7_999.0, 2_000_000.0, f32::NAN] {
+        resampled.set_sample_rate(rate);
+        assert_eq!(resampled.sample_rate(), 192_000.0, "{rate}");
     }
     resampled.set_sample_rate(96_000.0);
     plain.note_on(57, 1.0, None);
