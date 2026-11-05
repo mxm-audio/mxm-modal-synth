@@ -15,7 +15,7 @@ repository.workspace = true
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-# The instrument: voices, envelopes, LFOs, the route slots and the resampler, behind the interface
+# The instrument: voices, envelopes, LFOs, the route slots and the rate converter, behind the interface
 # in its `src/lib.rs`.
 mxm-modal-synth-dsp.workspace = true
 # `vst3` exports the VST3 as well as the CLAP. `unsafe_flush_denormals` sets flush-to-zero around

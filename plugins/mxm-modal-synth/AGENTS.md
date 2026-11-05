@@ -85,7 +85,7 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
   apply before the next sample. Nothing allocates in `process` or `reset`.
 - **The latency is `Instrument::latency_samples()`, reported in `activate`**, after
   `set_sample_rate`; fixed for the activation (none at 32 kHz). **`activate` refuses a rate outside
-  `HOST_RATES`** (8 kHz to 1.536 MHz), which the resampler would play at the wrong speed. A
+  `HOST_RATES`** (8 kHz to 1.536 MHz), which the rate converter would play at the wrong speed. A
   served rate is taken to the whole hertz: a fractional one plays at most 0.5 Hz off, 62 ppm at
   8 kHz and 11 at 44.1 (0.1 cent at most), inside an interface's own clock tolerance; refusing it
   would leave the plugin unloaded in such a host.

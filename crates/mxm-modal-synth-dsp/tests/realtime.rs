@@ -1,5 +1,5 @@
 //! Nothing allocates or frees after `Instrument::new` and `set_sample_rate`: not `render`, the
-//! note calls, the expressions or `reset`, at 32 kHz and through the resampler, with every slot in
+//! note calls, the expressions or `reset`, at 32 kHz and through the rate converter, with every slot in
 //! use (the crate's `AGENTS.md`, *Realtime*).
 
 use mxm_modal_synth_dsp::{

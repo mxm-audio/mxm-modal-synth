@@ -27,9 +27,9 @@ it was designed from, is ops' `plans/plan-elements.md`; Pi reviewed it in three 
 - **2026-11-05: Copies, not shared code.** *"Option C. This synthe and thanks Eg might change later,
   so the shared slots are mainly by accident."*, and of the envelopes and LFOs, *"yes, copy them
   too"*. The route slots, the envelopes, the LFOs, the plugin's shell and the editor's shape are
-  Thanks EG's, copied, so each instrument can change its own. Only the resampler was to move into
-  mxm-kit's `mxm-dsp`; it is a copy here until the owner gives the word to push the kit's public
-  `main`.
+  Thanks EG's, copied, so each instrument can change its own. Only the rate converter moved into
+  mxm-kit's `mxm-dsp`, shared with Thanks EG (the owner, 2026-11-05: "move it into the kit"; and
+  "Rate converter is more correct", the drum machines' Resample being another thing).
 
 ## The editor
 
@@ -90,5 +90,4 @@ slot on Model by velocity. **None has been heard yet** (E5).
   headroom would change that.
 - **"Env n input"** names the Follow mode's target as the plan and the DSP do, though the
   conventions say a target is never called *Input*.
-- **Copies the kit could hold**: the resampler (the plan moves it into `mxm-dsp`, waiting on the
-  owner's word to push), the time reading. The route slots stay copies by ruling.
+- **Copies the kit could hold**: the time reading. The route slots stay copies by ruling.

@@ -7,7 +7,7 @@ Parent: [`../../AGENTS.md`](../../AGENTS.md)
 The instrument around the ported voice: eight voices, each an Elements voice
 (`mxm_modal_voice::Voice`) with its hidden second voice beside it (`OminousVoice`), three envelopes
 and three LFOs; the sixteen route slots on the collection's routing (`mxm-modulation`); the part
-they share (each voice's mix, one soft limit, one reverb); and the resampler from 32 kHz to the
+they share (each voice's mix, one soft limit, one reverb); and the rate converter from 32 kHz to the
 host's rate. Framework-free, no file IO; nothing allocated after `Instrument::new` and
 `set_sample_rate`. The design is ops' `plans/plan-elements.md` §3 and §5. **The envelopes, the
 LFOs and the slots are MXM Thanks EG's, copied** (the owner, 2026-11-05: Option C), so each
@@ -22,7 +22,7 @@ modes and shapes, `reach`, `Target::offer`, `Instrument`'s methods): a change to
 `plugins/mxm-modal-synth` in the same commit. Behind it: `voice.rs` (one voice: the patch, the
 gate, the model, idling), `voices.rs` (allocation, the held keys, note ids), `part.rs` (the mix,
 the soft limit, the reverb, the panic), `envelope.rs`, `lfo.rs`, `routing.rs` (indices, laws,
-reaches, the grid), `resampler.rs`, `settings.rs` (the kept settings). Tests: `src/tests.rs`,
+reaches, the grid), `settings.rs` (the kept settings). Tests: `src/tests.rs`,
 `src/conformance.rs`, `tests/realtime.rs`; `examples/cpu.rs` the cost.
 
 # Local Contracts
@@ -134,15 +134,16 @@ depth rises linearly from 0 over the fade time after each note. Output −1 to 1
   law); a Rate ±4 octaves; envelope times as above; every other target its whole range (a control,
   Strength, Pan, a gate, an Input). Key routes take the standard's per-octave reach.
 
-## The resampler
+## The rate converter
 
-MXM Thanks EG's, its source the voices' 32 kHz: a fixed polyphase Kaiser-windowed sinc to the host's
-rate, passband to 14.4 kHz (0.45 of 32 kHz; the module stops at 16), stopband from the lower Nyquist
-at least 100 dB down, history cleared on `reset`; **host rates 8 kHz to 1.536 MHz** (`HOST_RATES`):
-`set_sample_rate` ignores any other, and the plugin refuses to activate at one.
-**Its latency is fixed**: 100 host samples at 44.1 kHz, 108 at 48, 216 at 96, 432 at 192. **At
-32 kHz bypassed, with no latency.** It is this crate's copy: **moving it into mxm-kit, as the plan
-asks, needs the owner's word to push the kit's public `main`**, and waits for it.
+**mxm-kit's `mxm_dsp::rate_converter`**, shared with MXM Thanks EG (the owner, 2026-11-05), from
+the voices' 32 kHz with the passband to 14.4 kHz (`PASSBAND_HZ`, 0.45 of 32 kHz; the module stops
+at 16): a fixed polyphase Kaiser-windowed sinc, stopband from the lower Nyquist at least 100 dB
+down, history cleared on `reset`; **host rates 8 kHz to 1.536 MHz** (`HOST_RATES`, the kit's):
+`set_sample_rate` ignores any other, and the plugin refuses to activate at one. **Its latency is
+fixed**: 100 host samples at 44.1 kHz, 108 at 48, 216 at 96, 432 at 192. **At 32 kHz bypassed,
+with no latency.** Its own tests are the kit's; the bits are this crate's copy's, compared output
+for output when it moved.
 
 ## Realtime
 
@@ -173,7 +174,7 @@ ends is ended 30 s after its release; the hidden voice's drone ends with its not
 infinity across every model, extreme settings and every slot at ±1; each envelope mode, the
 retrigger rule, Cycle and the gates; the LFO shapes, Retrigger and Fade; voice allocation and
 stealing, Mono and Legato, note ids; each target's reach; Contour is the exciter's envelope; the
-resampler's passband, stopband and latency; the standard's three conformance checks, each falsified
+converted stream and its latency; the standard's three conformance checks, each falsified
 once; no allocation; the CPU measure (the plan's §5.1: under a quarter of a core; the figure is in
 NOTES.md).
 

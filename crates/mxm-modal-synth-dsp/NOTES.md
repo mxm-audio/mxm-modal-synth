@@ -6,8 +6,8 @@ The reasons behind [`AGENTS.md`](AGENTS.md) and what was measured (E3, 2026-11-0
 
 `examples/cpu.rs`, release build, eight held notes of one model with every exciter playing, an
 envelope and an LFO routed, 256-sample renders, on the owner's Windows machine: the heaviest is
-**the modal resonator, 12.2 % of a core at 32 kHz** (8.2 % at 44.1 kHz with the resampler, the
-spread between runs larger than the resampler's cost); the hidden voice 10.0 %, the strings 8.3 %,
+**the modal resonator, 12.2 % of a core at 32 kHz** (8.2 % at 44.1 kHz with the rate converter, the
+spread between runs larger than the converter's cost); the hidden voice 10.0 %, the strings 8.3 %,
 the string 6.0 %. Under the plan's quarter of a core, so eight voices stand.
 
 ## One voice is the module's part

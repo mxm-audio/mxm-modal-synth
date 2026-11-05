@@ -30,6 +30,7 @@ mxm-control-map = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main
 mxm-editor = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
 mxm-modal-voice = { git = "https://github.com/mxm-audio/mxm-modal-voice", branch = "main" }
 mxm-measure = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
+mxm-dsp = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
 mxm-modulation = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
 mxm-modulation-params = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }
 mxm-params = { git = "https://github.com/mxm-audio/mxm-kit", branch = "main" }

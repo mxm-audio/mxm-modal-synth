@@ -1,5 +1,5 @@
 //! The cost of eight voices of each model, ops' `plans/plan-elements.md` §5.1 measure: eight held
-//! notes, every exciter playing, at 32 kHz and resampled to 44.1, a 256-sample render at a time,
+//! notes, every exciter playing, at 32 kHz and converted to 44.1, a 256-sample render at a time,
 //! as a share of one core (a second of audio's render time over a second). The bar is a quarter of
 //! a core for the heaviest.
 //!

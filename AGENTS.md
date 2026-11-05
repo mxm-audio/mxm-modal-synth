@@ -18,8 +18,7 @@ slots; 105 parameters.
 Pre-alpha (2026-11-05): the research and the harness (E1), the port with its 106 cases bit for
 bit (E2), the instrument (E3) and the plugin with its editor, factory sounds and control map (E4)
 are built, and pass their checks, the host tests included, and `clap-validator` but for its
-three known Windows preset-path failures (below). **Owed**: the
-resampler's move into mxm-kit (E3, the owner's word to push the kit), a run in Bitwig (E4), and
+three known Windows preset-path failures (below). **Owed**: a run in Bitwig (E4), and
 E5, the owner's: listening, then the freeze. Private until it is ready; after version 1.0 of the
 MXM collection.
 
@@ -30,7 +29,7 @@ Root owns `AGENTS.md`, `NOTES.md`, `README.md`, `NOTICE.md`, `LICENSE`, `TRADEMA
 alias), `.gitignore` and `.gitattributes`, and `xtask/` (the collection's shared `mxm-xtask`:
 `bundle`), and `docs/briefs/mxm-modal-synth.md` (the design system's §14 brief).
 The port is mxm-modal-voice, its own repository (below). `crates/mxm-modal-synth-dsp` (the
-instrument: voices, the part, envelopes, LFOs, the slots' routing, the resampler) and
+instrument: voices, the part, envelopes, LFOs, the slots' routing, the rate converter) and
 `plugins/mxm-modal-synth` (the shell and editor, with `host-tests/`, the slow tier) have their own
 `AGENTS.md`.
 
@@ -68,8 +67,9 @@ product names).
 - **The host holds what the panel can show at once**: the voice's 21 parameters, the envelopes' 21,
   the LFOs' 15 and sixteen route slots `route<r>_{source,target,amount}`, 48; **105**. A source or
   target is a value of a slot, never a parameter of its own. The plan's §5 has the lists.
-- **Every voice runs at 32 kHz**, as the module, and one resampler takes the sum to the host's rate
-  with a fixed, reported latency; at 32 kHz nothing is resampled.
+- **Every voice runs at 32 kHz**, as the module, and one rate converter (mxm-kit's
+  `mxm_dsp::rate_converter`) takes the sum to the host's rate with a fixed, reported latency; at
+  32 kHz nothing is converted.
 - **One voice is the module's part to the bit** (`one_voice_is_the_part_exactly`, all four models):
   the instrument's part is `Part::Process` for many voices, the resonators into one soft limit, the
   hidden voices after it, one reverb.
@@ -82,7 +82,7 @@ product names).
 - Build and test on Windows only, as far as `python ws.py reach` says a change goes; the other
   platforms in the owner's batch (the workspace's `AGENTS.md`).
 - Voice work in mxm-modal-voice, built here first through `python ws.py link mxm-modal-voice`; kit
-  work (the resampler's move) through `python ws.py link kit`, unlinked before any push; pushing
+  work (the rate converter's) through `python ws.py link kit`, unlinked before any push; pushing
   mxm-kit's public `main` needs the owner's word.
 
 # Verification
@@ -109,5 +109,5 @@ The reference's 106 cases and their digests are mxm-modal-voice's, in its `tests
 
 | Doc | Scope |
 |---|---|
-| [`crates/mxm-modal-synth-dsp/AGENTS.md`](crates/mxm-modal-synth-dsp/AGENTS.md) | The instrument: the interface with the plugin, the voices, the part, the envelopes with MATHS' functions, the LFOs, the routing, the resampler |
+| [`crates/mxm-modal-synth-dsp/AGENTS.md`](crates/mxm-modal-synth-dsp/AGENTS.md) | The instrument: the interface with the plugin, the voices, the part, the envelopes with MATHS' functions, the LFOs, the routing, the rate converter |
 | [`plugins/mxm-modal-synth/AGENTS.md`](plugins/mxm-modal-synth/AGENTS.md) | The shell: the 105 parameters and the slots' lists, events and the callback, Init and the presets, the control map, and the editor: its twelve cards, the slots as rows on their targets' cards |

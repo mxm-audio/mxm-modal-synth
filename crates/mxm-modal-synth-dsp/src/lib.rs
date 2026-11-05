@@ -1,6 +1,6 @@
 //! MXM Modal Synth's instrument: eight voices of the ported modal synthesis voice
 //! (`mxm-modal-voice`), each with its envelopes and LFOs, the sixteen route slots, the part they
-//! share (their mix, one soft limit and one reverb, as Elements' `Part` has), and the resampler
+//! share (their mix, one soft limit and one reverb, as Elements' `Part` has), and the rate converter
 //! from the voices' 32 kHz to the host's rate. Framework-free: plain values in, samples out.
 //!
 //! **The interface below is the contract with the plugin** (`plugins/mxm-modal-synth`): the plugin
@@ -14,7 +14,6 @@
 mod envelope;
 mod lfo;
 mod part;
-mod resampler;
 mod routing;
 mod settings;
 mod voice;
@@ -27,19 +26,23 @@ mod tests;
 
 pub use mxm_modulation::standard::Offer;
 
+use mxm_dsp::rate_converter::RateConverter;
 use part::Part;
-use resampler::Resampler;
 use routing::Routing;
 use voice::{BLOCK, DT, Shared};
 use voices::Voices;
 
 /// The voices' rate: every voice runs at it, as the module does.
 pub const ENGINE_RATE: f32 = 32_000.0;
+/// The rate converter's passband, Hz: 0.45 of the voices' rate: the module's own sound stops at its Nyquist, 16 kHz.
+const PASSBAND_HZ: f64 = 14_400.0;
 /// Models: modal, string, strings, the hidden voice.
 pub const MODELS: i32 = 4;
-/// The host rates the resampler serves, in Hz: [`Instrument::set_sample_rate`] ignores any other,
+/// The host rates the rate converter serves, in Hz: [`Instrument::set_sample_rate`] ignores any other,
 /// and the plugin refuses to activate at one, rather than play at the wrong speed.
-pub const HOST_RATES: std::ops::RangeInclusive<f32> = 8_000.0..=1_536_000.0;
+pub const HOST_RATES: std::ops::RangeInclusive<f32> = (*mxm_dsp::rate_converter::HOST_RATES.start()
+    as f32)
+    ..=(*mxm_dsp::rate_converter::HOST_RATES.end() as f32);
 /// Voices in Poly mode.
 pub const VOICES: usize = 8;
 /// Route slots.
@@ -421,7 +424,7 @@ pub struct Instrument {
     /// Volume after its smoothing; `None` until the first block, which starts at it.
     volume: Option<f32>,
     /// `None` at 32 kHz.
-    resampler: Option<Resampler>,
+    converter: Option<RateConverter>,
 }
 
 impl Instrument {
@@ -443,18 +446,19 @@ impl Instrument {
             block: [[0.0; 2]; BLOCK],
             position: BLOCK,
             volume: None,
-            resampler: None,
+            converter: None,
         })
     }
 
-    /// From the plugin's `activate`: the host's rate. Prepares the resampler; may allocate.
+    /// From the plugin's `activate`: the host's rate. Prepares the rate converter; may allocate.
     pub fn set_sample_rate(&mut self, host_rate: f32) {
         if !HOST_RATES.contains(&host_rate) {
             return;
         }
         self.host_rate = host_rate;
         let rate = host_rate.round().min(u32::MAX as f32) as u32;
-        self.resampler = (rate != ENGINE_RATE as u32).then(|| Resampler::new(rate));
+        self.converter = (rate != ENGINE_RATE as u32)
+            .then(|| RateConverter::new(ENGINE_RATE as u32, rate, PASSBAND_HZ));
     }
 
     /// The host's rate, as `set_sample_rate` last took it.
@@ -462,9 +466,9 @@ impl Instrument {
         self.host_rate
     }
 
-    /// The resampler's fixed latency at the current rate, in host samples; 0 at 32 kHz.
+    /// The rate converter's fixed latency at the current rate, in host samples; 0 at 32 kHz.
     pub fn latency_samples(&self) -> u32 {
-        self.resampler.as_ref().map_or(0, Resampler::latency)
+        self.converter.as_ref().map_or(0, RateConverter::latency)
     }
 
     /// Every voice silent and every state cleared, as `new` made it; allocates nothing. A render
@@ -483,7 +487,7 @@ impl Instrument {
         self.block = [[0.0; 2]; BLOCK];
         self.position = BLOCK;
         self.volume = None;
-        if let Some(r) = &mut self.resampler {
+        if let Some(r) = &mut self.converter {
             r.reset();
         }
         self.telemetry = Telemetry::default();
@@ -579,16 +583,16 @@ impl Instrument {
         self.absorb(settings);
         let n = left.len().min(right.len());
         let mut peak = 0.0f32;
-        if let Some(mut resampler) = self.resampler.take() {
+        if let Some(mut converter) = self.converter.take() {
             for (l, r) in left[..n].iter_mut().zip(&mut right[..n]) {
-                while resampler.needs_input() {
+                while converter.needs_input() {
                     let [a, b] = self.next_frame();
-                    resampler.push(a, b);
+                    converter.push(a, b);
                 }
-                (*l, *r) = resampler.output();
+                (*l, *r) = converter.output();
                 peak = peak.max(l.abs()).max(r.abs());
             }
-            self.resampler = Some(resampler);
+            self.converter = Some(converter);
         } else {
             for (l, r) in left[..n].iter_mut().zip(&mut right[..n]) {
                 [*l, *r] = self.next_frame();
@@ -607,13 +611,13 @@ impl Instrument {
         self.telemetry
     }
 
-    /// Whether anything still sounds: a voice, the reverb's tail, the resampler's history. A
+    /// Whether anything still sounds: a voice, the reverb's tail, the rate converter's history. A
     /// note event not yet rendered counts.
     pub fn is_sounding(&self) -> bool {
         self.events_len > 0
             || self.voices.voices.iter().any(|v| v.active)
             || self.part.ringing()
-            || self.resampler.as_ref().is_some_and(Resampler::ringing)
+            || self.converter.as_ref().is_some_and(RateConverter::ringing)
     }
 
     /// Host samples until silence: 0 when nothing sounds, else `u32::MAX`, so the plugin keeps

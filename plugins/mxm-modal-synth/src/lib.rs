@@ -285,8 +285,8 @@ impl Plugin for MxmModalSynth {
         editor::create(self.params.clone(), self.telemetry.clone())
     }
 
-    /// The host's rate goes to the instrument, which prepares its resampler (and may allocate:
-    /// this is not the audio thread), and **the resampler's latency is reported here, once**, as
+    /// The host's rate goes to the instrument, which prepares its rate converter (and may allocate:
+    /// this is not the audio thread), and **the rate converter's latency is reported here, once**, as
     /// nice-plug takes it: the activate context sends it when `activate` returns. It is fixed for
     /// the activation (`docs/plugin-conventions.md`, *Latency is fixed*).
     fn activate(
@@ -296,7 +296,7 @@ impl Plugin for MxmModalSynth {
         context: &mut impl ActivateContext<Self>,
     ) -> bool {
         let rate = buffer_config.sample_rate;
-        // A rate the resampler does not serve would play at the wrong speed: refused.
+        // A rate the rate converter does not serve would play at the wrong speed: refused.
         if !mxm_modal_synth_dsp::HOST_RATES.contains(&rate) {
             return false;
         }

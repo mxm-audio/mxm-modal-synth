@@ -156,7 +156,7 @@ fn the_gate_is_a_block_after_the_controls() {
 }
 
 /// **Silence in is exactly zero out once the voices are idle and the reverb has died**, at 32 kHz
-/// and through the resampler: every model, four voices, released, then nothing but zeros, and
+/// and through the rate converter: every model, four voices, released, then nothing but zeros, and
 /// nothing sounding.
 #[test]
 fn silence_is_exact_zero_once_everything_has_ended() {
@@ -795,10 +795,10 @@ fn the_lfos_retrigger_share_and_fade() {
     assert_eq!(published(&instrument, 1, Source::Lfo3), 1.0, "faded in");
 }
 
-/// **The host's rate is the 32 kHz stream resampled**, with the reported latency at 44.1, 48, 96
+/// **The host's rate is the 32 kHz stream converted**, with the reported latency at 44.1, 48, 96
 /// and 192 kHz; at 32 kHz none.
 #[test]
-fn the_host_rate_is_the_32_khz_stream_resampled() {
+fn the_host_rate_is_the_32_khz_stream_converted() {
     let settings = Settings {
         bow: 0.5,
         ..Settings::default()
@@ -807,28 +807,32 @@ fn the_host_rate_is_the_32_khz_stream_resampled() {
     assert_eq!(plain.latency_samples(), 0);
     plain.set_sample_rate(32_000.0);
     assert_eq!(plain.latency_samples(), 0);
-    let mut resampled = Instrument::new();
+    let mut converted = Instrument::new();
     for (rate, latency) in [
         (44_100.0, 100),
         (48_000.0, 108),
         (96_000.0, 216),
         (192_000.0, 432),
     ] {
-        resampled.set_sample_rate(rate);
-        assert_eq!(resampled.latency_samples(), latency, "{rate}");
-        assert_eq!(resampled.sample_rate(), rate);
+        converted.set_sample_rate(rate);
+        assert_eq!(converted.latency_samples(), latency, "{rate}");
+        assert_eq!(converted.sample_rate(), rate);
     }
-    // A rate the resampler does not serve is ignored, never played at the wrong speed.
+    // A rate the rate converter does not serve is ignored, never played at the wrong speed.
     for rate in [1_000.0, 7_999.0, 2_000_000.0, f32::NAN] {
-        resampled.set_sample_rate(rate);
-        assert_eq!(resampled.sample_rate(), 192_000.0, "{rate}");
+        converted.set_sample_rate(rate);
+        assert_eq!(converted.sample_rate(), 192_000.0, "{rate}");
     }
-    resampled.set_sample_rate(96_000.0);
+    converted.set_sample_rate(96_000.0);
     plain.note_on(57, 1.0, None);
-    resampled.note_on(57, 1.0, None);
+    converted.note_on(57, 1.0, None);
     let (input, _) = render(&mut plain, &settings, 3_200);
-    let (output, _) = render(&mut resampled, &settings, 9_600);
-    let mut r = crate::resampler::Resampler::new(96_000);
+    let (output, _) = render(&mut converted, &settings, 9_600);
+    let mut r = mxm_dsp::rate_converter::RateConverter::new(
+        crate::ENGINE_RATE as u32,
+        96_000,
+        crate::PASSBAND_HZ,
+    );
     let mut n = 0;
     for &y in &output {
         while r.needs_input() {
