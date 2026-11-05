@@ -1,9 +1,10 @@
 //! The 105 host parameters (ops' `plans/plan-elements.md` §5.5): the voice's 21, each
 //! envelope's 7, each LFO's 5 and the sixteen route slots' 48 ([`crate::routes`]).
 //!
-//! Every `#[id]` becomes permanent at the gate (E5), with the order of every list a saved state
-//! stores: Model's models, the voice modes, the envelope modes, the LFO shapes, and the route
-//! slots' sources and targets.
+//! **Every parameter is frozen** (E5, 2026-11-05): its `#[id]`, kind, range and default, and every
+//! list's values in their order (Model's models, the voice modes, the envelope modes, the LFO
+//! shapes, and the route slots' sources and targets), as `frozen-parameters.txt` holds them
+//! (`tests::the_parameters_are_the_frozen_tables`).
 //!
 //! **Smooth signals, not coefficients.** What is added to or multiplies the sound is smoothed;
 //! times, rates, modes and switches configure the state machines and are not. [`ModalSynthParams::
@@ -770,6 +771,120 @@ mod tests {
         unique.sort_unstable();
         unique.dedup();
         assert_eq!(unique.len(), ids.len(), "a duplicate id in {ids:?}");
+    }
+
+    /// The ids a list's values are stored by, in its order: `None` for a parameter that is no list.
+    fn list_ids(id: &str) -> Option<&'static [&'static str]> {
+        if id == "mode" {
+            VoiceMode::ids()
+        } else if id.starts_with("env") && id.ends_with("_mode") {
+            EnvelopeModeChoice::ids()
+        } else if id.ends_with("_shape") {
+            LfoShapeChoice::ids()
+        } else if id.ends_with("_source") {
+            SourceChoice::ids()
+        } else if id.ends_with("_target") {
+            TargetChoice::ids()
+        } else {
+            None
+        }
+    }
+
+    /// One line of `frozen-parameters.txt` for each parameter, in declaration order: its id, kind,
+    /// steps, default, its plain value at five points of its travel, and a list's ids.
+    fn frozen_lines(params: &ModalSynthParams) -> Vec<String> {
+        params
+            .param_map()
+            .into_iter()
+            .map(|(id, ptr, _)| {
+                let kind = match ptr {
+                    ParamPtr::FloatParam(_) => "float",
+                    ParamPtr::IntParam(_) => "int",
+                    ParamPtr::BoolParam(_) => "bool",
+                    ParamPtr::EnumParam(_) => "enum",
+                };
+                let values = list_ids(&id);
+                assert_eq!(kind == "enum", values.is_some(), "{id}: a list's ids");
+                // SAFETY: the parameters outlive the pointers, read on this thread alone.
+                let (steps, default, travel) = unsafe {
+                    (
+                        ptr.step_count().map_or("-".to_owned(), |n| n.to_string()),
+                        format!("{:?}", ptr.default_plain_value()),
+                        // A switch's travel is its two values, which its steps and default hold.
+                        [0.0, 0.25, 0.5, 0.75, 1.0]
+                            .map(|at| match kind {
+                                "bool" => format!("{:>12}", "-"),
+                                _ => format!("{:>12}", format!("{:?}", ptr.preview_plain(at))),
+                            })
+                            .join(" "),
+                    )
+                };
+                let values = values.map_or("-".to_owned(), |ids| ids.join(","));
+                format!("{id:<15} {kind:<5} {steps:>3} {default:>12} {travel} {values}")
+            })
+            .collect()
+    }
+
+    /// Two lines agree: the same words, and numbers within rounding.
+    fn agree(frozen: &str, now: &str) -> bool {
+        let (frozen, now): (Vec<&str>, Vec<&str>) = (
+            frozen.split_whitespace().collect(),
+            now.split_whitespace().collect(),
+        );
+        frozen.len() == now.len()
+            && frozen
+                .iter()
+                .zip(&now)
+                .all(|(a, b)| match (a.parse::<f64>(), b.parse::<f64>()) {
+                    (Ok(a), Ok(b)) => (a - b).abs() <= 1e-6 * a.abs().max(1.0),
+                    _ => a == b,
+                })
+    }
+
+    /// **The parameters are as frozen at E5** (2026-11-05), `frozen-parameters.txt` beside
+    /// `Cargo.toml`: every id, its kind, steps and default, its range as the plain value at five
+    /// points of its travel (which holds a skew as well as the ends), and each list's values by the
+    /// ids a saved state stores them by, in their order. A saved state stores plain values and a
+    /// list's ids; a preset and VST3 automation store the travel, a list's value as its index over
+    /// its length; so none of it may move, and no list may grow. A line never changes and no id is
+    /// removed or reused; a parameter added later is appended, the line this test prints. Numbers
+    /// agree within rounding: each platform's maths library rounds a skew its own way.
+    #[test]
+    fn the_parameters_are_the_frozen_tables() {
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/frozen-parameters.txt");
+        let file = std::fs::read_to_string(path).expect("frozen-parameters.txt");
+        let frozen: Vec<&str> = file
+            .lines()
+            .filter(|line| !line.trim().is_empty() && !line.starts_with('#'))
+            .collect();
+        let id = |line: &str| {
+            line.split_whitespace()
+                .next()
+                .unwrap_or_default()
+                .to_owned()
+        };
+        let now = frozen_lines(&ModalSynthParams::default());
+        for was in &frozen {
+            let line = now.iter().find(|line| id(line) == id(was));
+            let line = line.unwrap_or_else(|| panic!("{} is frozen: never removed", id(was)));
+            assert!(
+                agree(was, line),
+                "{} is frozen, and changed:\n  was {was}\n  now {line}",
+                id(was)
+            );
+        }
+        let new: Vec<&String> = now
+            .iter()
+            .filter(|line| !frozen.iter().any(|was| id(was) == id(line)))
+            .collect();
+        assert!(
+            new.is_empty(),
+            "not frozen; append to frozen-parameters.txt:\n{}",
+            new.iter()
+                .map(|line| line.as_str())
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
     }
 
     /// The preset system's list is nice-plug's, id for id and in order, so neither can omit or

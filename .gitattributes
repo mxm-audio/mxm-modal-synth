@@ -1,2 +1,4 @@
 # Every text file checks out as LF whatever core.autocrlf says, as tutti's does.
 * text=auto eol=lf
+# A CLAP state is its JSON's length as eight bytes, then the JSON: never converted.
+*.clapstate binary

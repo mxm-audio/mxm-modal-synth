@@ -5,8 +5,9 @@
 //! **The lists are the DSP's.** A source is `Off` or one of `mxm_modal_synth_dsp::Source::ALL`, a
 //! target `Off` or one of `Target::ALL`, in their order: [`SourceChoice`] and [`TargetChoice`]
 //! carry the DSP's value itself, and their names come from an exhaustive match, so a source or
-//! target added to the DSP fails to compile here until it is named. The order is what a saved state
-//! and a preset store (a parameter's index); it is fixed at the gate (E5).
+//! target added to the DSP fails to compile here until it is named. A saved state stores a value
+//! by its id, a preset by its index over the list's length, so both lists are frozen as they are
+//! (E5, `frozen-parameters.txt`): neither may grow.
 //!
 //! **A slot is in use when neither its source nor its target is `Off`**; switching its source off
 //! keeps its target and amount, and two slots on one source and target add (the DSP's rules). The

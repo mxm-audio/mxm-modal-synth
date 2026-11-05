@@ -32,7 +32,7 @@ macro_rules! plugin_name {
 /// What the host displays.
 pub const NAME: &str = plugin_name!();
 
-/// The CLAP identifier, built from the name. Permanent from the gate (E5).
+/// The CLAP identifier, built from the name. Permanent (the conventions' *Permanent identifiers*).
 pub const CLAP_ID: &str = concat!("dk.mxm.", plugin_name!());
 
 /// The longest stretch rendered between looks at the parameters: an event-free buffer is still

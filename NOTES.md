@@ -97,7 +97,32 @@ Every register from two octaves down to two up. **Approved by the owner** in MXM
 - **The dark FM voice by its oscillators and its filter**: Strength only adds to its envelope, whose
   VCA is open once it sustains, and Geometry is its filter's mode, louder towards low-pass.
 
-## Open points, for the owner (E5)
+## The freeze (E5, 2026-11-05)
+
+The plan's E5 (*"the 105 ids, the lists' and Model's values, every range and default"*), done on
+the owner's *"Commit and continue"* once the sounds were approved. What each store keeps decides
+what is frozen:
+
+- **A saved state** (nice-plug's, a CLAP or VST3 project) stores each parameter by its id at its
+  plain value, a bool as a bool, a list's value by its id (`"follow"`, `"saw_up"`): so the ids,
+  the kinds and the lists' ids.
+- **A preset** stores its travel, a list's value as its index over the list's length, and
+  **automation** the same in VST3 (the travel; in CLAP a stepped value is its step): so every
+  range and skew, and every list's order and length. **No list may grow**, even at its end: one
+  more target moves every stored target but the first. A new source or target comes as a
+  parameter of its own, or not at all.
+- **Defaults** are Init, and what a parameter added later opens at in an older state.
+
+`frozen-parameters.txt` holds a range as the plain value at five points of its travel, which
+catches a skew a minimum and maximum would miss; a bool's travel is its two values, so its line
+holds only its steps and default. Model's four values are the voice's own numbering, which
+mxm-modal-voice's cases hold; its names are readings, free to change, as every parameter's and
+value's name is (the hosts key on ids). The host tests then open, through today's plugin, the state
+saved at the freeze with every parameter moved (`tests/fixtures/frozen-2026-11-05.*`, written once
+by the ignored `write_the_frozen_state`, which refuses to write it again). Both checks were made to
+fail (a range's end changed in the table; a value in the saved state) before they were kept.
+
+## Open points, for the owner
 
 - **The hidden voice's dry drone ends with its note**, 10 ms after its gated outputs fall silent; on
   the module it drones while the voice runs. A recorded deviation (the DSP's `NOTES.md`).
@@ -107,5 +132,5 @@ Every register from two octaves down to two up. **Approved by the owner** in MXM
   are flattened by it. Kept, because one voice must be the module's part to the bit; a per-voice
   headroom would change that.
 - **"Env n input"** names the Follow mode's target as the plan and the DSP do, though the
-  conventions say a target is never called *Input*.
+  conventions say a target is never called *Input*. A name, so free to change after the freeze.
 - **Copies the kit could hold**: the time reading. The route slots stay copies by ruling.
