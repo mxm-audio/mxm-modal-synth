@@ -19,8 +19,8 @@ Pre-alpha (2026-11-05): the research and the harness (E1), the port with its 106
 bit (E2), the instrument (E3) and the plugin with its editor, factory sounds and control map (E4)
 are built, and pass their checks, the host tests included, and `clap-validator` but for its
 three known Windows preset-path failures (below). E5 is done: the owner approved the sounds,
-and the parameters are frozen (2026-11-05). **Owed**: a run in Bitwig (E4), and the owner's
-rulings on the open points in `NOTES.md`. **Public since 2026-11-05** (the owner: *"publish this
+and the parameters are frozen (2026-11-05). It runs in Bitwig, CLAP and VST3 (2026-11-05,
+`NOTES.md`). **Owed**: the owner's rulings on the open points in `NOTES.md`. **Public since 2026-11-05** (the owner: *"publish this
 synth too"*), with mxm-modal-voice; nothing is released before version 1.0 of the MXM collection,
 and the instrument comes after it.
 

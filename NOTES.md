@@ -100,6 +100,17 @@ Every register from two octaves down to two up. **Approved by the owner** in MXM
 - **The dark FM voice by its oscillators and its filter**: Strength only adds to its envelope, whose
   VCA is open once it sustains, and Geometry is its filter's mode, louder towards low-pass.
 
+## In Bitwig (E4, 2026-11-05)
+
+Run through Bitwig's controller API (the Control Deck bridge), on the bundles `cargo xtask bundle`
+installed: Bitwig lists MXM Modal Synth as a CLAP and a VST3 from the system folders; each format loads on
+a track of its own at Init with all 105 parameters, and its editor opens as it is inserted; a
+clip of single notes and a held chord sounds on both (the tracks' meters, every other track
+silent); Model set from the host reads back in the plugin's own words (*Dark FM*, *Strings*); and once the
+transport stops every track falls to silence, no voice left sounding. Not run there: a project
+saved and opened (the host tests' `state.rs` takes every parameter through CLAP state) and the
+preset browser.
+
 ## The freeze (E5, 2026-11-05)
 
 The plan's E5 (*"the 105 ids, the lists' and Model's values, every range and default"*), done on
