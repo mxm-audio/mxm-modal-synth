@@ -78,7 +78,8 @@ this one goes to the module's ends, read off its source (`research:` the Element
   (*Underwater*), pan and pitch swinging (*Doppler*), cycling breath (*Ratchet breath*); and the dark
   FM voice as piano, acid and growling bass, screaming lead, theremin, horn, swarm and nebula.
 
-Every register from two octaves down to two up. **None has been heard yet** (E5).
+Every register from two octaves down to two up. **Approved by the owner** in MXM Player
+(2026-11-05: *"That is MUCH better"*, then *"the sounds are approved"*).
 
 **Levelled in the sound, never by Volume**, to the set's ±5 LU window (`tests/factory_levels.rs`):
 

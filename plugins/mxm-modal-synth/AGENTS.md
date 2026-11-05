@@ -103,8 +103,8 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
   parameter's own units; the ignored `write_the_factory_presets` writes the files and `order.txt`,
   and `the_shipped_files_are_the_design` fails when they differ. At least fifty (60), each with its
   category, every model with one (`every_model_has_a_sound`), names short, sentence case and the
-  set's own; the order a first impression, then `Category::ALL`'s (sorted in `design`). **Their
-  listening is owed (E5).**
+  set's own; the order a first impression, then `Category::ALL`'s (sorted in `design`). **The owner
+  approved them (2026-11-05)**: a change to a sound is the owner's to hear.
 - **The set's levels are `tests/factory_levels.rs`**: each file loaded as a host loads it, played
   as its category is (at 120 bpm), its BS.1770 momentary loudness at its loudest within `WINDOW_LU`
   of the set's median, no sample past full scale, and silent within `ENDS_WITHIN` of its key going
