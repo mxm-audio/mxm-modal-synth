@@ -13,7 +13,8 @@ factory sounds. The voice is held bit for bit to the code it was ported from; th
 crate, [mxm-modal-voice](https://github.com/mxm-audio/mxm-modal-voice) (MIT).
 `cargo xtask bundle mxm-modal-synth --release` builds and installs the CLAP and VST3.
 
-Pre-alpha: nothing is released, and the repository is private until it is ready.
+Pre-alpha: nothing is released yet. The sounds and the parameters are settled; the parameters are
+frozen, so a saved project opens in every later version.
 
 ## Licence
 

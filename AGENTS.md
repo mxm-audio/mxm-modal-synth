@@ -20,8 +20,9 @@ bit (E2), the instrument (E3) and the plugin with its editor, factory sounds and
 are built, and pass their checks, the host tests included, and `clap-validator` but for its
 three known Windows preset-path failures (below). E5 is done: the owner approved the sounds,
 and the parameters are frozen (2026-11-05). **Owed**: a run in Bitwig (E4), and the owner's
-rulings on the open points in `NOTES.md`. Private until it is ready; after version 1.0 of the
-MXM collection.
+rulings on the open points in `NOTES.md`. **Public since 2026-11-05** (the owner: *"publish this
+synth too"*), with mxm-modal-voice; nothing is released before version 1.0 of the MXM collection,
+and the instrument comes after it.
 
 # Ownership
 
@@ -44,7 +45,7 @@ mxm-modal-voice, which commits only the harness's cases and its outputs' SHA-256
 ## The voice: mxm-modal-voice
 
 - **The port is its own repository**, `mxm-audio/mxm-modal-voice` (`libs/mxm-modal-voice` in the
-  workspace), MIT, private until the owner says otherwise, taken by its `main`, locked. It holds
+  workspace), MIT, public since 2026-11-05, taken by its `main`, locked. It holds
   Elements' part bit for bit to the C++ at 32 kHz, in blocks of 16, and its `AGENTS.md` has the
   porting rules. A change to the voice is made there, keeping its 106 cases bit for bit, then
   relocked here.

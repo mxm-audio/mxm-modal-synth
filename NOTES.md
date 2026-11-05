@@ -13,8 +13,11 @@ it was designed from, is ops' `plans/plan-elements.md`; Pi reviewed it in three 
   it: envelopes, LFOs and the performance sources, eight voices.
 - **2026-11-05: A free crate too.** *"And a free rust crate too"*: the port is
   `mxm-audio/mxm-modal-voice` (MIT, as the code it is ported from), bit identical to Elements' C++
-  and held there by 106 reference cases; this repository takes it by its `main`, locked. Private
-  until the owner says otherwise.
+  and held there by 106 reference cases; this repository takes it by its `main`, locked.
+- **2026-11-05: Public.** *"commit push and publis this synth too"*, then, asked whether the voice
+  goes with it (a public repository builds alone from a fresh clone, and this one takes the voice
+  from GitHub): *"Publish both"*. Both repositories are public; nothing is released until version
+  1.0 of the collection.
 - **2026-11-05: The names.** *"name is fine"*, then *"i approved the default name"*: the instrument
   is **MXM Modal Synth** and the crate **mxm-modal-voice**, named by kind, as Elements is a modal
   synthesis voice. Emilie Gillet's *Guidelines for derivative works* ask that "Mutable Instruments"
