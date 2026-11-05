@@ -8,7 +8,7 @@ published under the MIT licence. She has no part in this product and does not en
 Eight voices, each a whole modal voice: a bow, a blow and a strike exciting a modal resonator, a
 string or a set of strings tuned to a chord, and a dark FM voice beside them; one room for all.
 Per voice three envelopes, each also a function generator (cycling, gated, or following another
-signal), and three LFOs; sixteen route slots from nineteen sources to forty targets; sixty-one
+signal), and three LFOs; sixteen route slots from nineteen sources to forty targets; sixty
 factory sounds. The voice is held bit for bit to the code it was ported from; the port is its own
 crate, [mxm-modal-voice](https://github.com/mxm-audio/mxm-modal-voice) (MIT).
 `cargo xtask bundle mxm-modal-synth --release` builds and installs the CLAP and VST3.

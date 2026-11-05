@@ -1,0 +1,430 @@
+{
+  "schema_version": 1,
+  "plugin": "dk.mxm.mxm-modal-synth",
+  "name": "Sitar",
+  "category": "pluck",
+  "_comment": "`v` is the value and is authoritative. `text` is this plugin's own formatting of it, kept so the file can be read, and is never loaded.",
+  "params": {
+    "bend_range": {
+      "v": 0.083333336,
+      "text": "2 st"
+    },
+    "blow": {
+      "v": 0.0,
+      "text": "0 %"
+    },
+    "blow_timbre": {
+      "v": 0.5,
+      "text": "50 %"
+    },
+    "bow": {
+      "v": 0.0,
+      "text": "0 %"
+    },
+    "bow_timbre": {
+      "v": 0.5,
+      "text": "50 %"
+    },
+    "brightness": {
+      "v": 0.8,
+      "text": "80 %"
+    },
+    "coarse": {
+      "v": 0.5,
+      "text": "0 st"
+    },
+    "contour": {
+      "v": 1.0,
+      "text": "100 %"
+    },
+    "damping": {
+      "v": 0.65,
+      "text": "65 %"
+    },
+    "env1_attack": {
+      "v": 0.11066865,
+      "text": "5.0 ms"
+    },
+    "env1_cycle": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "env1_decay": {
+      "v": 0.31609726,
+      "text": "300.0 ms"
+    },
+    "env1_mode": {
+      "v": 0.0,
+      "text": "Note"
+    },
+    "env1_release": {
+      "v": 0.31609726,
+      "text": "300.0 ms"
+    },
+    "env1_response": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "env1_sustain": {
+      "v": 0.7,
+      "text": "70 %"
+    },
+    "env2_attack": {
+      "v": 0.11066865,
+      "text": "5.0 ms"
+    },
+    "env2_cycle": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "env2_decay": {
+      "v": 0.31609726,
+      "text": "300.0 ms"
+    },
+    "env2_mode": {
+      "v": 0.0,
+      "text": "Note"
+    },
+    "env2_release": {
+      "v": 0.31609726,
+      "text": "300.0 ms"
+    },
+    "env2_response": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "env2_sustain": {
+      "v": 0.7,
+      "text": "70 %"
+    },
+    "env3_attack": {
+      "v": 0.0,
+      "text": "0.5 ms"
+    },
+    "env3_cycle": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "env3_decay": {
+      "v": 0.23998122,
+      "text": "100.0 ms"
+    },
+    "env3_mode": {
+      "v": 0.0,
+      "text": "Note"
+    },
+    "env3_release": {
+      "v": 0.31609726,
+      "text": "300.0 ms"
+    },
+    "env3_response": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "env3_sustain": {
+      "v": 1.0,
+      "text": "100 %"
+    },
+    "fine": {
+      "v": 0.5,
+      "text": "+0.00 st"
+    },
+    "flow": {
+      "v": 0.5,
+      "text": "50 %"
+    },
+    "geometry": {
+      "v": 0.01,
+      "text": "1 %"
+    },
+    "glide": {
+      "v": 0.0,
+      "text": "0.0 ms"
+    },
+    "lfo1_fade": {
+      "v": 0.0,
+      "text": "0.0 ms"
+    },
+    "lfo1_rate": {
+      "v": 0.562088,
+      "text": "5.00 Hz"
+    },
+    "lfo1_retrigger": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "lfo1_shape": {
+      "v": 0.0,
+      "text": "Sine"
+    },
+    "lfo1_sync": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "lfo2_fade": {
+      "v": 0.0,
+      "text": "0.0 ms"
+    },
+    "lfo2_rate": {
+      "v": 0.37513536,
+      "text": "1.00 Hz"
+    },
+    "lfo2_retrigger": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "lfo2_shape": {
+      "v": 0.0,
+      "text": "Sine"
+    },
+    "lfo2_sync": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "lfo3_fade": {
+      "v": 0.0,
+      "text": "0.0 ms"
+    },
+    "lfo3_rate": {
+      "v": 0.2482948,
+      "text": "0.20 Hz"
+    },
+    "lfo3_retrigger": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "lfo3_shape": {
+      "v": 0.0,
+      "text": "Sine"
+    },
+    "lfo3_sync": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "mallet": {
+      "v": 0.63,
+      "text": "63 %"
+    },
+    "mode": {
+      "v": 0.0,
+      "text": "Poly"
+    },
+    "model": {
+      "v": 0.33333334,
+      "text": "String"
+    },
+    "position": {
+      "v": 0.08,
+      "text": "8 %"
+    },
+    "route10_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route10_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route10_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route11_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route11_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route11_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route12_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route12_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route12_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route13_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route13_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route13_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route14_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route14_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route14_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route15_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route15_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route15_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route16_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route16_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route16_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route1_amount": {
+      "v": 0.5833333,
+      "text": "17 %"
+    },
+    "route1_source": {
+      "v": 0.15789473,
+      "text": "Env 3"
+    },
+    "route1_target": {
+      "v": 0.05,
+      "text": "Strength"
+    },
+    "route2_amount": {
+      "v": 0.75,
+      "text": "50 %"
+    },
+    "route2_source": {
+      "v": 0.7894737,
+      "text": "Velocity"
+    },
+    "route2_target": {
+      "v": 0.05,
+      "text": "Strength"
+    },
+    "route3_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route3_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route3_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route4_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route4_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route4_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route5_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route5_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route5_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route6_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route6_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route6_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route7_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route7_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route7_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route8_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route8_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route8_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route9_amount": {
+      "v": 0.5,
+      "text": "0 %"
+    },
+    "route9_source": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "route9_target": {
+      "v": 0.0,
+      "text": "Off"
+    },
+    "space": {
+      "v": 0.4,
+      "text": "40 %"
+    },
+    "strike": {
+      "v": 0.8,
+      "text": "80 %"
+    },
+    "strike_timbre": {
+      "v": 0.7,
+      "text": "70 %"
+    },
+    "volume": {
+      "v": 0.9335342,
+      "text": "-3.0 dB"
+    }
+  },
+  "state": null
+}

@@ -101,7 +101,7 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
 - `preset.rs` implements `mxm_preset::Instrument`; `CLAP_PRESETS` and `preset_loader` let a host
   list and load the files. The design is `preset::tests::design`, overrides on Init in each
   parameter's own units; the ignored `write_the_factory_presets` writes the files and `order.txt`,
-  and `the_shipped_files_are_the_design` fails when they differ. At least fifty (61), each with its
+  and `the_shipped_files_are_the_design` fails when they differ. At least fifty (60), each with its
   category, every model with one (`every_model_has_a_sound`), names short, sentence case and the
   set's own; the order a first impression, then `Category::ALL`'s (sorted in `design`). **Their
   listening is owed (E5).**

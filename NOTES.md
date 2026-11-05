@@ -57,19 +57,36 @@ move. No new widget.
 
 ## The factory set
 
-Sixty-one sounds across every category, every model with sounds that show it: the modal resonator
-struck as bars, bells and plates, bowed and blown; the string plucked and bowed; the strings'
-chords strummed and bowed; the dark FM voice as pad, lead, bass, drone and effect. Others show the
-instrument's additions: an LFO on Position or Pan, Key into Brightness, Random into Position, a
-synced square on the bow, a sample-and-hold on Geometry, a cycling envelope, Follow on Contour, a
-slot on Model by velocity. **None has been heard yet** (E5).
+**Sixty sounds, each one idea pushed to its end** (the owner, 2026-11-05, on hearing the first set:
+*"They sound the same. Be more creative. go wild."*). The first set kept every control near its
+middle (Geometry 0.2–0.6, Position 0.2–0.4, Space 0.5–0.95) in one register, so it sounded alike;
+this one goes to the module's ends, read off its source (`research:` the Elements page):
+
+- **The room**: Space carried past 1.75 by an envelope freezes the reverb while a key is held
+  (*Frozen bells*, *Freeze bloom*, *Frozen stab*); Space at nothing puts the raw exciter on the left
+  (*Split breath*).
+- **The exciters at their ends**: the plectrum's double strike at its top (*Flam tom*), particles
+  re-exciting a held string (*Dust harp*, *Tanpura*), the recorded hits (*Prepared piano*,
+  *Kalimba*, *Glass shards*), the bow just over its threshold (*Scraped metal*), the tube
+  (*Didgeridoo*, *Duck call*).
+- **The resonators at their ends**: the string's bridge buzzing at Geometry 0 (*Sitar*, *Buzz
+  bass*, *Rattlesnake*), a plate (*Tin plate keys*, *Thunder sheet*), a bell, the pickup at the
+  bridge (*Clav string*, *Sul ponticello*) or the middle (*Pan flute*).
+- **What the instrument adds**: pitch drops on an envelope (*Deep kick*, *Laser*), chords that change
+  by themselves (*Chord cycler*, *Chord stepper*), a model chosen per note (*Model roulette*),
+  random pitch (*Pitch rain*), a sample-and-hold babbling (*Computer babble*), a comb sweeping
+  (*Underwater*), pan and pitch swinging (*Doppler*), cycling breath (*Ratchet breath*); and the dark
+  FM voice as piano, acid and growling bass, screaming lead, theremin, horn, swarm and nebula.
+
+Every register from two octaves down to two up. **None has been heard yet** (E5).
 
 **Levelled in the sound, never by Volume**, to the set's ±5 LU window (`tests/factory_levels.rs`):
 
 - **A struck sound by its accent**, Envelope 3 held for the note into Strength. The accent returns
   to rest 0.3 s after the release, which a strike never hears; the strike lands while the
   envelope is still rising, so a large accent reaches the module's top sooner rather than going
-  past it, and `Plectrum tick` carries 20 dB for that.
+  past it. A Bass sound sits no lower than an octave down: two octaves down, the phrase's notes
+  fall under 25 Hz, below what the loudness measure weighs.
 - **A bowed or blown sound by its levels, never cut by the accent**: a cut that ends 0.3 s after the
   release would swell the exciter's release by as much. Held chords of these sum into the part's
   one soft limit (the DSP's `NOTES.md`), so a −10 dB accent moved a pad by about 4 LU; the levels

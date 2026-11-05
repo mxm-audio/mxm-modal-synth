@@ -18,28 +18,28 @@
       "text": "50 %"
     },
     "bow": {
-      "v": 0.6,
-      "text": "60 %"
+      "v": 0.55,
+      "text": "55 %"
     },
     "bow_timbre": {
       "v": 0.4,
       "text": "40 %"
     },
     "brightness": {
-      "v": 0.45,
-      "text": "45 %"
+      "v": 0.4,
+      "text": "40 %"
     },
     "coarse": {
       "v": 0.5,
       "text": "0 st"
     },
     "contour": {
-      "v": 0.55,
-      "text": "55 %"
+      "v": 0.6,
+      "text": "60 %"
     },
     "damping": {
-      "v": 0.7,
-      "text": "70 %"
+      "v": 0.8,
+      "text": "80 %"
     },
     "env1_attack": {
       "v": 0.11066865,
@@ -98,16 +98,16 @@
       "text": "70 %"
     },
     "env3_attack": {
-      "v": 0.0,
-      "text": "0.5 ms"
+      "v": 0.11066865,
+      "text": "5.0 ms"
     },
     "env3_cycle": {
       "v": 0.0,
       "text": "Off"
     },
     "env3_decay": {
-      "v": 0.23998122,
-      "text": "100.0 ms"
+      "v": 0.31609726,
+      "text": "300.0 ms"
     },
     "env3_mode": {
       "v": 0.0,
@@ -122,8 +122,8 @@
       "text": "0 %"
     },
     "env3_sustain": {
-      "v": 1.0,
-      "text": "100 %"
+      "v": 0.7,
+      "text": "70 %"
     },
     "fine": {
       "v": 0.5,
@@ -134,8 +134,8 @@
       "text": "50 %"
     },
     "geometry": {
-      "v": 0.85,
-      "text": "85 %"
+      "v": 0.8,
+      "text": "80 %"
     },
     "glide": {
       "v": 0.0,
@@ -166,16 +166,16 @@
       "text": "0.0 ms"
     },
     "lfo2_rate": {
-      "v": 0.37513536,
-      "text": "1.00 Hz"
+      "v": 0.2759807,
+      "text": "0.30 Hz"
     },
     "lfo2_retrigger": {
       "v": 0.0,
       "text": "Off"
     },
     "lfo2_shape": {
-      "v": 0.0,
-      "text": "Sine"
+      "v": 0.16666667,
+      "text": "Triangle"
     },
     "lfo2_sync": {
       "v": 0.0,
@@ -302,16 +302,16 @@
       "text": "Off"
     },
     "route1_amount": {
-      "v": 0.5133333,
-      "text": "3 %"
+      "v": 0.65,
+      "text": "30 %"
     },
     "route1_source": {
-      "v": 0.15789473,
-      "text": "Env 3"
+      "v": 0.57894737,
+      "text": "LFO 2"
     },
     "route1_target": {
-      "v": 0.05,
-      "text": "Strength"
+      "v": 0.375,
+      "text": "Position"
     },
     "route2_amount": {
       "v": 0.5,
@@ -414,8 +414,8 @@
       "text": "90 %"
     },
     "strike": {
-      "v": 0.3,
-      "text": "30 %"
+      "v": 0.4,
+      "text": "40 %"
     },
     "strike_timbre": {
       "v": 0.3,

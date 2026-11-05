@@ -48,8 +48,7 @@ pub fn factory_folder() -> std::path::PathBuf {
 mod tests {
     use super::*;
     use crate::params::{
-        ENVELOPE_IDS, EnvelopeModeChoice, INIT_MODEL, LFO_IDS, LFO_SYNC, LfoShapeChoice,
-        MODEL_NAMES, VoiceMode,
+        ENVELOPE_IDS, INIT_MODEL, LFO_IDS, LFO_SYNC, LfoShapeChoice, MODEL_NAMES, VoiceMode,
     };
     use crate::routes::{ROUTE_IDS, SourceChoice, TargetChoice};
     use mxm_modal_synth_dsp::{SLOTS, Source, Target};
@@ -168,10 +167,6 @@ mod tests {
             self.set(ENVELOPE_IDS[n - 1][5], 1.0)
         }
 
-        fn env_mode(self, n: usize, mode: EnvelopeModeChoice) -> Self {
-            self.set(ENVELOPE_IDS[n - 1][6], mode.to_index() as f32)
-        }
-
         fn lfo(self, n: usize, rate_hz: f32, shape: LfoShapeChoice) -> Self {
             let [rate, form, ..] = LFO_IDS[n - 1];
             self.set(rate, rate_hz).set(form, shape.to_index() as f32)
@@ -187,11 +182,6 @@ mod tests {
                 .rate
                 .preview_plain(position);
             self.set(rate, hz).set(sync, 1.0)
-        }
-
-        /// LFO `n` restarts with each note, each voice its own.
-        fn retriggered(self, n: usize) -> Self {
-            self.set(LFO_IDS[n - 1][3], 1.0)
         }
 
         fn fade(self, n: usize, seconds: f32) -> Self {
@@ -220,14 +210,41 @@ mod tests {
         /// the note, into Strength at `dB / 30` (the accent spans 30 dB across Strength's range,
         /// `10^(1.5 (s − 0.5))`), so the exciters are played harder or softer and the set is
         /// balanced in the sound, never by Volume. Strength stops at its top, +15 dB; a larger
-        /// value only reaches it sooner while the envelope rises, which is when a strike lands
-        /// (`Plectrum tick`'s 20). The accent returns to rest within 0.3 s of the
-        /// release: a strike is over by then and a sustained exciter only fades the sooner, but
+        /// value only reaches it sooner while the envelope rises, which is when a strike lands.
+        /// The accent returns to rest within 0.3 s of the release: a strike is over by then and a sustained exciter only fades the sooner, but
         /// one cut by the accent would swell, so a bowed or blown sound is never cut by it (its
         /// levels and its contour set it; `designed` holds that).
         fn accent(self, db: f32) -> Self {
             self.env(3, 0.0005, 0.1, 1.0, 0.3)
                 .route(Envelope3, Strength, db / 30.0)
+        }
+
+        /// Coarse tuning, in semitones.
+        fn coarse(self, semitones: f32) -> Self {
+            self.set("coarse", semitones)
+        }
+
+        /// One voice, every note retriggered.
+        fn mono(self) -> Self {
+            self.voice(VoiceMode::Mono)
+        }
+
+        /// One voice, a note played over a held one gliding to it in `glide` seconds.
+        fn legato(self, glide: f32) -> Self {
+            self.voice(VoiceMode::Legato).set("glide", glide)
+        }
+
+        /// **A pitch drop**: Envelope 1 starts the note `semitones` up and falls back in
+        /// `seconds`, a slot for each octave of it (a slot on Pitch reaches 12).
+        fn drop(self, semitones: f32, seconds: f32) -> Self {
+            let mut sound = self.env(1, 0.0005, seconds, 0.0, seconds);
+            let mut left = semitones;
+            while left > 0.0 {
+                let step = left.min(12.0);
+                sound = sound.route(Envelope1, Pitch, step / 12.0);
+                left -= step;
+            }
+            sound
         }
 
         /// A slow vibrato on LFO 1, faded in.
@@ -261,14 +278,13 @@ mod tests {
     }
 
     use Category::{Bass, Brass, Drone, Fx, Keys, Lead, Pad, Percussion, Pluck, Sequence, Strings};
-    use EnvelopeModeChoice::Follow;
     use LfoShapeChoice::{SampleAndHold, SmoothRandom, Square, Triangle};
     use Source::{
-        Contour, Envelope1, Envelope2, Envelope3, Key, Lfo1, Lfo2, Lfo3, Pressure, Random, Velocity,
+        Envelope1, Envelope2, Envelope3, Key, Lfo1, Lfo2, Lfo3, Pressure, Random, Velocity,
     };
     use Target::{
-        Bow, Brightness, Damping, Envelope2Input, Flow, Geometry, Mallet, Model, Pan, Pitch,
-        Position, Space, Strength,
+        Blow, BlowTimbre, Bow, BowTimbre, Brightness, Flow, Geometry, Model, Pan, Pitch, Position,
+        Space, Strength, StrikeTimbre,
     };
 
     /// The models, as `params::MODEL_NAMES` numbers them.
@@ -279,479 +295,530 @@ mod tests {
 
     /// **The factory sounds, readable**: a first impression, then by category, sorted into
     /// `Category::ALL`'s order for the browser (stable, so each category keeps the order written
-    /// here; `the_browser_order_is_a_first_impression_then_the_categories`). Every model has sounds that show what it does best: the modal resonator struck,
-    /// bowed and blown, the string plucked and bowed, the strings' chords, the dark FM voice; the
-    /// modulation the instrument adds to the module is shown off along the way, each such sound
-    /// saying what it shows. Each one's loudness is held by `tests/factory_levels.rs`, and is set
+    /// here; `the_browser_order_is_a_first_impression_then_the_categories`). **Each is one idea
+    /// pushed to its end** (the owner, 2026-11-05: "They sound the same. Be more creative. go
+    /// wild."): the controls at their extremes, the reverb frozen past Space's 1.75, the bridge
+    /// buzzing, the plectrum's flam, particles re-exciting a held string, chords that change by
+    /// themselves, a model chosen per note, pitch drops, and every register; every model is
+    /// there, and each sound's comment says what it does. Each one's loudness is held by `tests/factory_levels.rs`, and is set
     /// in the sound, never by Volume.
     pub(super) fn design() -> Vec<Design> {
         let sounds = vec![
-            // The first impression: glassy struck bars, velocity on the strike, a slow LFO
-            // moving where they are heard.
-            Sound::new("Glass keys", Keys, MODAL)
-                .accent(2.0)
-                .strike(0.8, mallet(0.5), 0.6)
-                .resonator(0.25, 0.65, 0.45, 0.3)
-                .space(0.75)
-                .lfo(2, 0.3, Triangle)
-                .touch()
-                .route(Lfo2, Position, 0.15),
+            // The first impression: bells whose room freezes while they are held, an envelope
+            // carrying Space past 1.75, where the reverb stops taking input and rings on.
+            Sound::new("Frozen bells", Keys, MODAL)
+                .accent(6.0)
+                .strike(0.8, mallet(0.9), 0.8)
+                .resonator(0.92, 0.8, 0.6, 0.15)
+                .space(0.9)
+                .env(1, 1.2, 0.1, 1.0, 1.5)
+                .route(Envelope1, Space, 0.45)
+                .touch(),
             // Keys.
-            Sound::new("Struck bars", Keys, MODAL)
-                .accent(7.0)
-                .strike(0.8, mallet(0.3), 0.35)
-                .resonator(0.3, 0.4, 0.35, 0.25)
+            Sound::new("Gamelan", Keys, MODAL)
+                .strike(0.8, mallet(1.0), 0.9)
+                .resonator(0.78, 0.7, 0.6, 0.33)
                 .space(0.6)
+                .route(Random, Pitch, 0.01)
                 .touch(),
-            Sound::new("Celesta box", Keys, MODAL)
-                .accent(-0.7)
-                .strike(0.75, mallet(0.6), 0.75)
-                .resonator(0.55, 0.75, 0.5, 0.35)
-                .space(0.7)
+            // Key into Geometry: every key a different preparation.
+            Sound::new("Prepared piano", Keys, MODAL)
+                .accent(-4.0)
+                .strike(0.85, hits(0.2), 0.6)
+                .resonator(0.32, 0.55, 0.55, 0.07)
+                .space(0.3)
+                .route(Key, Geometry, 0.3)
+                .route(Random, Position, 0.1)
                 .touch(),
-            Sound::new("Toy piano", Keys, MODAL)
-                .accent(4.5)
-                .strike(0.75, mallet(0.7), 0.8)
-                .resonator(0.65, 0.7, 0.35, 0.2)
-                .space(0.55)
-                .touch(),
-            Sound::new("Soft mallets", Keys, MODAL)
-                .accent(7.0)
-                .strike(0.85, mallet(0.1), 0.2)
-                .resonator(0.2, 0.3, 0.5, 0.3)
-                .space(0.65)
-                .touch(),
-            // A shared LFO pans each note's tines: the instrument's routes on the module's sound.
-            Sound::new("Electric tines", Keys, MODAL)
-                .accent(2.5)
-                .strike(0.8, mallet(0.45), 0.55)
-                .resonator(0.18, 0.55, 0.55, 0.15)
-                .space(0.7)
-                .lfo(1, 3.5, Triangle)
-                .touch()
-                .route(Lfo1, Pan, 0.35),
-            Sound::new("Tubular bells", Keys, MODAL)
-                .accent(-0.3)
-                .strike(0.8, mallet(0.5), 0.6)
-                .resonator(0.6, 0.6, 0.62, 0.4)
+            Sound::new("Tin music box", Keys, MODAL)
+                .strike(0.75, mallet(1.0), 1.0)
+                .resonator(0.66, 1.0, 0.5, 0.5)
+                .coarse(24.0)
                 .space(0.8)
+                .route(Random, Pitch, 0.02)
                 .touch(),
-            Sound::new("Small bells", Keys, MODAL)
-                .accent(0.3)
-                .strike(0.75, mallet(0.6), 0.7)
-                .resonator(0.75, 0.8, 0.6, 0.35)
-                .space(0.85)
+            // The pickup at the bridge, and velocity on the brightness: a funky clavinet.
+            Sound::new("Clav string", Keys, STRING)
+                .accent(15.0)
+                .strike(1.0, plectrum(0.05), 0.9)
+                .resonator(0.15, 0.85, 0.4, 0.08)
+                .space(0.12)
+                .route(Velocity, Brightness, 0.3)
                 .touch(),
-            // Key into Brightness: low notes dark, high ones bright, as a real set of bars.
-            Sound::new("Wood and metal", Keys, MODAL)
-                .accent(5.0)
-                .strike(0.8, mallet(0.35), 0.45)
-                .resonator(0.45, 0.45, 0.45, 0.3)
-                .space(0.65)
-                .touch()
-                .route(Key, Brightness, 0.6)
-                .route(Key, Geometry, 0.3),
+            // Velocity into the FM depth: soft notes round, hard ones glassy.
+            Sound::new("Dark FM piano", Keys, DARK)
+                .strike(0.4, 0.5, 0.35)
+                .blow(0.3, 0.25, 0.2)
+                .bow(0.0, 0.1)
+                .contour(0.2)
+                .resonator(0.15, 0.45, 0.6, 0.3)
+                .space(0.4)
+                .route(Velocity, StrikeTimbre, 0.4),
+            Sound::new("Tin plate keys", Keys, MODAL)
+                .strike(0.8, mallet(0.7), 0.7)
+                .resonator(0.02, 0.8, 0.5, 0.25)
+                .space(0.55)
+                .touch(),
             // Percussion.
-            Sound::new("Wooden bars", Percussion, MODAL)
-                .accent(11.5)
-                .strike(0.85, mallet(0.25), 0.4)
-                .resonator(0.3, 0.45, 0.2, 0.3)
-                .space(0.55)
+            // A pitch dropping two octaves in 80 ms, and nothing bright: a kick.
+            Sound::new("Deep kick", Percussion, MODAL)
+                .accent(15.0)
+                .strike(0.9, mallet(0.0), 0.0)
+                .resonator(0.4, 0.05, 0.2, 0.5)
+                .coarse(-24.0)
+                .space(0.1)
+                .drop(24.0, 0.08)
                 .touch(),
-            Sound::new("Metal plate", Percussion, MODAL)
-                .accent(7.0)
-                .strike(0.8, mallet(0.5), 0.6)
-                .resonator(0.8, 0.7, 0.4, 0.25)
-                .space(0.7)
+            // Particles on a plate: a rattling burst, a snare of sorts.
+            Sound::new("Clang snare", Percussion, MODAL)
+                .accent(15.0)
+                .strike(0.9, particles(0.9), 0.9)
+                .resonator(0.05, 0.9, 0.22, 0.25)
+                .space(0.3)
                 .touch(),
-            Sound::new("Hand drum", Percussion, MODAL)
+            Sound::new("Tin hat", Percussion, MODAL)
+                .accent(15.0)
+                .strike(1.0, particles(1.0), 1.0)
+                .resonator(1.0, 1.0, 0.15, 0.2)
+                .coarse(12.0)
+                .space(0.2)
+                .touch(),
+            Sound::new("Log drum", Percussion, MODAL)
+                .accent(8.0)
+                .strike(0.9, mallet(0.2), 0.3)
+                .resonator(0.25, 0.3, 0.35, 0.3)
+                .coarse(-12.0)
+                .space(0.35)
+                .drop(2.0, 0.05)
+                .touch(),
+            // The plectrum at its top strikes twice, 130 ms apart: a flam.
+            Sound::new("Flam tom", Percussion, MODAL)
                 .accent(10.0)
-                .strike(0.9, hits(0.85), 0.35)
-                .resonator(0.08, 0.3, 0.15, 0.4)
-                .space(0.55)
+                .strike(0.9, plectrum(1.0), 0.4)
+                .resonator(0.45, 0.4, 0.3, 0.3)
+                .coarse(-12.0)
+                .space(0.35)
                 .touch(),
-            Sound::new("Tuned can", Percussion, MODAL)
-                .accent(-0.2)
-                .strike(0.85, hits(0.5), 0.5)
-                .resonator(0.7, 0.55, 0.25, 0.3)
-                .space(0.5)
+            Sound::new("Rattlesnake", Percussion, STRING)
+                .accent(15.0)
+                .strike(1.0, particles(0.5), 0.8)
+                .resonator(0.0, 0.9, 0.45, 0.1)
+                .space(0.3)
                 .touch(),
-            Sound::new("Knock", Percussion, MODAL)
-                .accent(9.0)
-                .strike(0.9, hits(0.7), 0.3)
-                .resonator(0.4, 0.2, 0.1, 0.45)
-                .space(0.5)
-                .touch(),
-            // Random into Position and Brightness: no two hits alike.
-            Sound::new("Loose hits", Percussion, MODAL)
-                .accent(-0.1)
-                .strike(0.85, hits(0.3), 0.5)
-                .resonator(0.5, 0.5, 0.3, 0.3)
-                .space(0.6)
-                .touch()
-                .route(Random, Position, 0.3)
-                .route(Random, Brightness, 0.2),
-            Sound::new("Plectrum tick", Percussion, STRING)
-                .accent(20.0)
-                .strike(0.85, plectrum(0.9), 0.8)
-                .resonator(0.3, 0.65, 0.35, 0.2)
-                .space(0.5)
-                .touch(),
-            Sound::new("Struck strings", Percussion, STRINGS)
-                .accent(8.5)
-                .strike(0.85, mallet(0.6), 0.5)
-                .resonator(chord(5), 0.5, 0.35, 0.3)
-                .space(0.65)
+            // Random into Position and Geometry: no two shards alike.
+            Sound::new("Glass shards", Percussion, MODAL)
+                .accent(4.0)
+                .strike(0.85, hits(0.0), 0.9)
+                .resonator(0.95, 1.0, 0.3, 0.3)
+                .coarse(12.0)
+                .space(0.7)
+                .route(Random, Position, 0.5)
+                .route(Random, Geometry, 0.1)
                 .touch(),
             // Pluck.
-            Sound::new("Plucked harp", Pluck, STRING)
-                .accent(-6.0)
-                .strike(0.8, plectrum(0.5), 0.5)
-                .resonator(0.25, 0.6, 0.6, 0.3)
+            // Geometry at its floor curves the bridge: the string buzzes against it.
+            Sound::new("Sitar", Pluck, STRING)
+                .accent(5.0)
+                .strike(0.8, plectrum(0.15), 0.7)
+                .resonator(0.01, 0.8, 0.65, 0.08)
+                .space(0.4)
+                .touch(),
+            Sound::new("Koto", Pluck, STRING)
+                .accent(4.0)
+                .strike(0.8, plectrum(0.3), 0.75)
+                .resonator(0.3, 0.6, 0.6, 0.15)
+                .space(0.5)
+                .lfo(1, 5.5, Triangle)
+                .fade(1, 0.4)
+                .route(Lfo1, Pitch, 0.03)
+                .touch(),
+            // A major seventh from every key.
+            Sound::new("Chord harp", Pluck, STRINGS)
+                .accent(2.0)
+                .strike(0.8, plectrum(0.4), 0.6)
+                .resonator(chord(9), 0.7, 0.7, 0.3)
+                .space(0.75)
+                .touch(),
+            Sound::new("Kalimba", Pluck, MODAL)
+                .strike(0.85, hits(0.6), 0.6)
+                .resonator(0.18, 0.5, 0.5, 0.15)
+                .space(0.45)
+                .touch(),
+            // A pitch that droops three semitones as it rings: boing.
+            Sound::new("Rubber band", Pluck, STRING)
+                .accent(2.0)
+                .strike(0.85, plectrum(0.6), 0.5)
+                .resonator(0.6, 0.2, 0.4, 0.5)
+                .space(0.3)
+                .drop(3.0, 0.12)
+                .touch(),
+            // Particles keep exciting the string while the key is held: shimmering dust.
+            Sound::new("Dust harp", Pluck, STRING)
+                .strike(0.7, particles(0.3), 0.7)
+                .resonator(0.4, 0.7, 0.75, 0.25)
+                .space(0.85)
+                .touch(),
+            // Bass.
+            Sound::new("Buzz bass", Bass, STRING)
+                .accent(15.0)
+                .strike(1.0, plectrum(0.2), 0.6)
+                .resonator(0.0, 0.6, 0.5, 0.1)
+                .coarse(-12.0)
+                .space(0.15)
+                .mono()
+                .touch(),
+            // An envelope opening the filter on each note, the feedback biting: acid.
+            Sound::new("Acid FM bass", Bass, DARK)
+                .strike(0.0, 0.25, 0.5)
+                .blow(0.35, 0.5, 0.6)
+                .bow(0.0, 0.5)
+                .contour(0.7)
+                .resonator(0.1, 0.2, 0.3, 0.3)
+                .coarse(-12.0)
+                .space(0.1)
+                .legato(0.05)
+                .env(2, 0.0005, 0.25, 0.0, 0.1)
+                .route(Envelope2, Brightness, 0.5),
+            Sound::new("Wooden sub", Bass, MODAL)
+                .accent(10.0)
+                .strike(0.9, mallet(0.1), 0.2)
+                .resonator(0.35, 0.1, 0.4, 0.4)
+                .coarse(-24.0)
+                .space(0.05)
+                .mono()
+                .touch(),
+            Sound::new("Slap bass", Bass, STRING)
+                .accent(15.0)
+                .strike(1.0, plectrum(0.25), 0.7)
+                .resonator(0.2, 0.9, 0.5, 0.1)
+                .coarse(-12.0)
+                .space(0.1)
+                .mono()
+                .route(Velocity, Brightness, 0.3)
+                .touch(),
+            Sound::new("Bowed contrabass", Bass, STRING)
+                .accent(15.0)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.9, 0.3)
+                .contour(0.5)
+                .resonator(0.25, 0.4, 0.45, 0.3)
+                .coarse(-12.0)
+                .space(0.2)
+                .mono(),
+            // Feedback at its top and a synced LFO on the filter's mode: a growl that wobbles.
+            Sound::new("Growl bass", Bass, DARK)
+                .strike(0.8, 0.25, 0.5)
+                .blow(0.8, 0.25, 0.4)
+                .bow(0.0, 0.95)
+                .contour(0.7)
+                .resonator(0.3, 0.5, 0.3, 0.3)
+                .coarse(-24.0)
+                .space(0.1)
+                .mono()
+                .synced(1, mxm_tempo::Division::Eighth)
+                .route(Lfo1, Geometry, 0.3),
+            // Lead.
+            Sound::new("Screaming FM", Lead, DARK)
+                .strike(0.25, 0.5, 0.8)
+                .blow(0.25, 0.5, 0.8)
+                .bow(0.0, 1.0)
+                .contour(0.7)
+                .resonator(0.0, 0.8, 0.4, 0.3)
+                .space(0.35)
+                .legato(0.12)
+                .vibrato(0.03)
+                .route(Pressure, BowTimbre, -0.3),
+            // A long glide and a wide vibrato on the plainest oscillator.
+            Sound::new("Theremin", Lead, DARK)
+                .strike(0.0, 0.0, 0.0)
+                .blow(0.32, 0.0, 0.0)
+                .bow(0.0, 0.0)
+                .contour(0.75)
+                .resonator(0.1, 0.9, 0.4, 0.3)
+                .space(0.45)
+                .legato(0.4)
+                .lfo(1, 5.5, Triangle)
+                .fade(1, 0.6)
+                .route(Lfo1, Pitch, 0.04),
+            // The pickup at the middle hears odd modes only: hollow, like a pipe.
+            Sound::new("Pan flute", Lead, MODAL)
+                .accent(5.0)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.66, 0.5, 0.3)
+                .contour(0.75)
+                .resonator(0.45, 0.4, 0.5, 0.5)
+                .space(0.5)
+                .mono()
+                .vibrato(0.015),
+            Sound::new("Duck call", Lead, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.72, 0.4, 0.25)
+                .contour(0.8)
+                .resonator(0.55, 0.4, 0.4, 0.05)
+                .space(0.25)
+                .mono()
+                .drop(2.0, 0.15),
+            Sound::new("Glass harmonica", Lead, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.5, 0.7)
+                .contour(0.65)
+                .resonator(0.88, 0.85, 0.7, 0.3)
                 .space(0.7)
-                .touch(),
-            Sound::new("Nylon pluck", Pluck, STRING)
-                .accent(-5.0)
-                .strike(0.8, plectrum(0.3), 0.4)
-                .resonator(0.25, 0.45, 0.55, 0.25)
-                .space(0.55)
-                .touch(),
-            Sound::new("Steel pluck", Pluck, STRING)
-                .accent(-1.0)
-                .strike(0.8, plectrum(0.6), 0.7)
-                .resonator(0.3, 0.7, 0.6, 0.2)
-                .space(0.6)
-                .touch(),
-            // Low Geometry curves the string's bridge: a buzz as it rings.
-            Sound::new("Buzzing pluck", Pluck, STRING)
-                .accent(-4.0)
-                .strike(0.8, plectrum(0.5), 0.55)
-                .resonator(0.05, 0.6, 0.55, 0.3)
-                .space(0.6)
-                .touch(),
-            Sound::new("Strummed chord", Pluck, STRINGS)
-                .accent(2.5)
-                .strike(0.8, plectrum(0.5), 0.55)
-                .resonator(chord(8), 0.6, 0.6, 0.3)
-                .space(0.7)
-                .touch(),
-            Sound::new("Mallet pluck", Pluck, MODAL)
-                .accent(7.0)
-                .strike(0.8, mallet(0.8), 0.6)
-                .resonator(0.22, 0.55, 0.4, 0.15)
-                .space(0.6)
-                .touch(),
+                .legato(0.08)
+                .vibrato(0.02),
+            // Brass.
+            Sound::new("Tube fanfare", Brass, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.85, 0.6, 0.55)
+                .contour(0.8)
+                .resonator(0.15, 0.5, 0.4, 0.3)
+                .space(0.45)
+                .env(2, 0.04, 0.3, 0.6, 0.2)
+                .route(Envelope2, Brightness, 0.3),
+            // A long glide on a dark tube: a slide trombone.
+            Sound::new("Slide trombone", Brass, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.85, 0.5, 0.3)
+                .contour(0.75)
+                .resonator(0.2, 0.35, 0.4, 0.3)
+                .space(0.3)
+                .legato(0.15),
+            // An envelope on the FM depth: the bite at the start of a horn's note.
+            Sound::new("FM horn", Brass, DARK)
+                .strike(0.0, 0.25, 0.3)
+                .blow(0.3, 0.25, 0.3)
+                .bow(0.0, 0.2)
+                .contour(0.75)
+                .resonator(0.1, 0.55, 0.4, 0.3)
+                .space(0.35)
+                .env(2, 0.03, 0.25, 0.3, 0.2)
+                .route(Envelope2, BlowTimbre, 0.4),
             // Pad.
-            Sound::new("Bowed glass", Pad, MODAL)
+            // Noise blown into a metal resonator, the room freezing as the chord swells.
+            Sound::new("Freeze bloom", Pad, MODAL)
                 .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.44, 0.5)
+                .blow(0.08, 0.9, 0.6)
                 .contour(0.6)
-                .resonator(0.45, 0.6, 0.7, 0.3)
+                .resonator(0.7, 0.6, 0.6, 0.3)
                 .space(0.9)
-                .lfo(2, 0.2, SmoothRandom)
-                .route(Lfo2, Position, 0.2),
-            Sound::new("Breath pad", Pad, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.09, 0.3, 0.4)
-                .contour(0.6)
-                .resonator(0.3, 0.5, 0.65, 0.3)
-                .space(0.95),
-            Sound::new("Tube choir", Pad, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.75, 0.5, 0.25)
-                .contour(0.6)
-                .resonator(0.2, 0.35, 0.45, 0.3)
-                .space(0.9),
-            // An envelope as a function generator: a slow swell of the bow under each chord.
-            Sound::new("Swelling bow", Pad, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.33, 0.45)
-                .contour(0.55)
-                .resonator(0.35, 0.55, 0.7, 0.3)
-                .space(0.9)
-                .env(1, 1.5, 1.0, 0.8, 1.5)
-                .route(Envelope1, Bow, 0.3),
-            Sound::new("Frozen air", Pad, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.12, 0.8, 0.7)
-                .contour(0.6)
-                .resonator(0.6, 0.6, 0.7, 0.3)
-                .space(0.98)
-                .lfo(2, 0.15, Triangle)
-                .route(Lfo2, Geometry, 0.15),
-            Sound::new("Dark FM pad", Pad, DARK)
-                .strike(0.6, 0.35, 0.3)
-                .blow(0.7, 0.3, 0.3)
-                .contour(0.6)
-                .resonator(0.5, 0.4, 0.5, 0.4)
-                .space(0.8),
-            Sound::new("Chord pad", Pad, STRINGS)
+                .env(1, 2.0, 0.1, 1.0, 1.5)
+                .route(Envelope1, Space, 0.5),
+            // A slow LFO on Geometry: the strings' chord changes by itself.
+            Sound::new("Chord cycler", Pad, STRINGS)
                 .accent(10.0)
                 .strike(0.0, mallet(0.5), 0.5)
                 .bow(0.6, 0.5)
                 .contour(0.6)
-                .resonator(chord(3), 0.55, 0.65, 0.3)
-                .space(0.9),
-            // Strings.
-            Sound::new("Bowed cello", Strings, STRING)
+                .resonator(chord(5), 0.6, 0.75, 0.3)
+                .space(0.9)
+                .lfo(1, 0.25, Triangle)
+                .route(Lfo1, Geometry, 0.5),
+            // Position and Geometry wandering together: vowels.
+            Sound::new("Breathing choir", Pad, MODAL)
                 .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.8, 0.45)
+                .blow(0.18, 0.2, 0.4)
                 .contour(0.6)
-                .resonator(0.25, 0.5, 0.55, 0.3)
+                .resonator(0.55, 0.5, 0.7, 0.5)
+                .space(0.95)
+                .lfo(2, 0.15, SmoothRandom)
+                .route(Lfo2, Position, 0.4)
+                .route(Lfo2, Geometry, 0.1),
+            // A wobbling pitch, as worn tape: wow and flutter.
+            Sound::new("Tape chords", Pad, STRINGS)
+                .accent(15.0)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.8, 0.4)
+                .contour(0.6)
+                .resonator(chord(6), 0.35, 0.7, 0.3)
+                .space(0.85)
+                .lfo(1, 0.8, SmoothRandom)
+                .route(Lfo1, Pitch, 0.02),
+            // The second oscillator detuned and the voice spinning: a swarm.
+            Sound::new("Dark FM swarm", Pad, DARK)
+                .strike(0.2, 0.5, 0.4)
+                .blow(0.2, 0.5, 0.3)
+                .bow(0.8, 0.3)
+                .contour(0.6)
+                .resonator(0.2, 0.55, 0.5, 1.0)
+                .space(0.95),
+            // Space at nothing: the raw breath on the left, the resonator on the right.
+            Sound::new("Split breath", Pad, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.17, 0.6, 0.6)
+                .contour(0.6)
+                .resonator(0.4, 0.5, 0.7, 0.3)
+                .space(0.0),
+            // Strings.
+            // The bow just over its threshold, rough on a bell: scraped metal.
+            Sound::new("Scraped metal", Strings, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.45, 1.0)
+                .contour(0.6)
+                .resonator(0.97, 0.6, 0.7, 0.3)
+                .space(0.8),
+            // Played at the bridge: thin and glassy.
+            Sound::new("Sul ponticello", Strings, STRING)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.35, 0.9)
+                .contour(0.65)
+                .resonator(0.25, 0.95, 0.55, 0.02)
                 .space(0.6)
-                .vibrato(0.02),
-            Sound::new("Bowed ensemble", Strings, STRINGS)
-                .accent(8.0)
+                .vibrato(0.025),
+            Sound::new("Minor ninths", Strings, STRINGS)
+                .accent(9.0)
                 .strike(0.0, mallet(0.5), 0.5)
                 .bow(0.7, 0.5)
                 .contour(0.65)
-                .resonator(chord(1), 0.55, 0.65, 0.3)
+                .resonator(chord(3), 0.55, 0.7, 0.3)
                 .space(0.85),
-            Sound::new("Glass strings", Strings, MODAL)
+            // A synced square on the bow: tremolo bowing in time.
+            Sound::new("Tremolo cello", Strings, STRING)
                 .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.43, 0.6)
+                .bow(0.7, 0.45)
                 .contour(0.6)
-                .resonator(0.2, 0.65, 0.65, 0.25)
-                .space(0.8)
-                .vibrato(0.015),
-            // Pressure leans on the bow.
-            Sound::new("Leaning bow", Strings, STRING)
-                .accent(2.0)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.5, 0.5)
-                .contour(0.6)
-                .resonator(0.3, 0.5, 0.55, 0.3)
-                .space(0.7)
-                .route(Pressure, Bow, 0.4)
-                .route(Pressure, Brightness, 0.2),
-            // Lead.
-            Sound::new("Flute lead", Lead, MODAL)
-                .accent(0.8)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.6, 0.25, 0.45)
-                .contour(0.7)
-                .resonator(0.15, 0.55, 0.5, 0.3)
-                .space(0.6)
-                .voice(VoiceMode::Legato)
-                .set("glide", 0.06)
-                .vibrato(0.02),
-            Sound::new("Reed lead", Lead, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.75, 0.4, 0.22)
-                .contour(0.7)
-                .resonator(0.2, 0.38, 0.45, 0.3)
+                .resonator(0.25, 0.5, 0.55, 0.3)
                 .space(0.55)
-                .voice(VoiceMode::Mono)
-                .vibrato(0.015),
-            Sound::new("Bowed lead", Lead, STRING)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.85, 0.55)
-                .contour(0.65)
-                .resonator(0.25, 0.55, 0.5, 0.3)
-                .space(0.6)
-                .voice(VoiceMode::Legato)
-                .set("glide", 0.05)
-                .vibrato(0.025),
-            Sound::new("Dark FM lead", Lead, DARK)
-                .strike(0.6, 0.3, 0.3)
-                .blow(1.0, 0.5, 0.5)
-                .contour(0.7)
-                .resonator(0.43, 0.7, 0.4, 0.3)
-                .space(0.6)
-                .voice(VoiceMode::Mono)
-                .set("glide", 0.04),
-            Sound::new("Glass whistle", Lead, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.17, 0.1, 0.8)
-                .contour(0.7)
-                .resonator(0.5, 0.8, 0.5, 0.3)
-                .space(0.65)
-                .voice(VoiceMode::Mono),
-            // Bass.
-            Sound::new("Plucked bass", Bass, STRING)
-                .accent(7.5)
-                .strike(0.85, plectrum(0.4), 0.4)
-                .resonator(0.25, 0.35, 0.5, 0.3)
-                .space(0.35)
-                .set("coarse", -12.0)
-                .voice(VoiceMode::Mono)
-                .touch(),
-            Sound::new("Wood bass", Bass, MODAL)
-                .accent(10.5)
-                .strike(0.85, mallet(0.25), 0.35)
-                .resonator(0.2, 0.3, 0.4, 0.3)
-                .space(0.35)
-                .set("coarse", -12.0)
-                .voice(VoiceMode::Mono)
-                .touch(),
-            Sound::new("Dark FM bass", Bass, DARK)
-                .strike(1.0, 0.25, 0.5)
-                .blow(0.8, 0.25, 0.4)
-                .contour(0.65)
-                .resonator(0.35, 0.55, 0.3, 0.3)
-                .space(0.3)
-                .set("coarse", -12.0)
-                .voice(VoiceMode::Mono),
-            Sound::new("Bowed bass", Bass, STRING)
-                .accent(13.0)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.8, 0.4)
-                .contour(0.5)
-                .resonator(0.25, 0.4, 0.5, 0.3)
-                .space(0.35)
-                .set("coarse", -12.0)
-                .voice(VoiceMode::Mono),
-            Sound::new("Thump bass", Bass, MODAL)
-                .accent(13.0)
-                .strike(0.9, hits(0.9), 0.3)
-                .resonator(0.1, 0.25, 0.25, 0.4)
-                .space(0.35)
-                .set("coarse", -12.0)
-                .voice(VoiceMode::Mono)
-                .touch(),
-            // Brass.
-            // A second envelope opens the brightness as the note speaks, as a horn's does.
-            Sound::new("Tube brass", Brass, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.85, 0.6, 0.5)
-                .contour(0.7)
-                .resonator(0.15, 0.45, 0.4, 0.3)
-                .space(0.6)
-                .env(2, 0.08, 0.4, 0.6, 0.2)
-                .route(Envelope2, Brightness, 0.3),
-            Sound::new("Muted horn", Brass, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.85, 0.5, 0.35)
-                .contour(0.7)
-                .resonator(0.2, 0.4, 0.45, 0.3)
-                .space(0.55),
-            // Drone.
-            Sound::new("Dark FM drone", Drone, DARK)
-                .strike(1.0, 0.4, 0.4)
-                .blow(1.0, 0.35, 0.4)
-                .contour(0.6)
-                .resonator(0.38, 0.6, 0.5, 0.6)
-                .space(0.9)
-                .lfo(3, 0.08, SmoothRandom)
-                .route(Lfo3, Flow, 0.1)
-                .route(Lfo3, Mallet, -0.1),
-            Sound::new("Singing bowl", Drone, MODAL)
-                .accent(0.8)
-                .strike(0.3, mallet(0.3), 0.3)
-                .bow(0.6, 0.4)
-                .contour(0.55)
-                .resonator(0.85, 0.45, 0.7, 0.3)
-                .space(0.9),
-            Sound::new("Bowed metal drone", Drone, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.46, 0.5)
-                .contour(0.6)
-                .resonator(0.9, 0.5, 0.7, 0.35)
-                .space(0.95),
-            Sound::new("Buzzing drone", Drone, STRINGS)
-                .accent(6.0)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.4, 0.6)
-                .contour(0.6)
-                .resonator(chord(0), 0.75, 0.7, 0.3)
-                .space(0.7),
-            // Sequence.
-            // A synced square on the bow: it pulls in time with the host.
-            Sound::new("Pulsing bow", Sequence, MODAL)
-                .accent(4.0)
-                .strike(0.5, mallet(0.4), 0.4)
-                .bow(0.4, 0.5)
-                .contour(0.6)
-                .resonator(0.4, 0.55, 0.6, 0.3)
-                .space(0.7)
                 .synced(1, mxm_tempo::Division::Sixteenth)
                 .set(LFO_IDS[0][1], Square.to_index() as f32)
-                .route(Lfo1, Bow, 0.4),
-            // A sample-and-hold steps the Geometry: every note a new shape.
-            Sound::new("Stepped shapes", Sequence, MODAL)
-                .accent(5.0)
-                .strike(0.8, mallet(0.5), 0.55)
-                .resonator(0.4, 0.55, 0.4, 0.3)
-                .space(0.65)
+                .route(Lfo1, Bow, 0.5),
+            // Drone.
+            // A tube an octave down, its brightness and timbre wandering: a didgeridoo.
+            Sound::new("Didgeridoo", Drone, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.8, 0.3, 0.4)
+                .contour(0.7)
+                .resonator(0.5, 0.25, 0.5, 0.12)
+                .coarse(-12.0)
+                .space(0.4)
+                .lfo(3, 0.7, SmoothRandom)
+                .route(Lfo3, BlowTimbre, 0.3)
+                .route(Lfo3, Brightness, 0.15),
+            Sound::new("Singing bowl", Drone, MODAL)
+                .strike(0.4, mallet(0.3), 0.3)
+                .bow(0.55, 0.4)
+                .contour(0.6)
+                .resonator(0.8, 0.4, 0.8, 0.3)
+                .space(0.9)
+                .lfo(2, 0.3, Triangle)
+                .route(Lfo2, Position, 0.3),
+            // Particles plucking the strings over and over: a tanpura on fifths.
+            Sound::new("Tanpura", Drone, STRINGS)
+                .accent(6.0)
+                .strike(0.8, particles(0.4), 0.7)
+                .resonator(chord(5), 0.8, 0.65, 0.3)
+                .space(0.8),
+            // The FM ratio drifting very slowly under a spinning voice.
+            Sound::new("FM nebula", Drone, DARK)
+                .strike(0.8, 0.4, 0.5)
+                .blow(0.8, 0.35, 0.5)
+                .bow(0.6, 0.6)
+                .contour(0.6)
+                .resonator(0.3, 0.6, 0.5, 0.8)
+                .space(0.95)
+                .lfo(3, 0.05, SmoothRandom)
+                .route(Lfo3, Flow, 0.2),
+            Sound::new("Wind organ", Drone, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.12, 1.0, 0.7)
+                .contour(0.6)
+                .resonator(0.5, 0.6, 0.65, 0.5)
+                .coarse(-12.0)
+                .space(0.95),
+            // Sequence.
+            // A sample-and-hold on Geometry, in time: every note a different chord.
+            Sound::new("Chord stepper", Sequence, STRINGS)
+                .accent(3.0)
+                .strike(0.8, plectrum(0.4), 0.6)
+                .resonator(chord(5), 0.6, 0.55, 0.3)
+                .space(0.6)
                 .synced(2, mxm_tempo::Division::Eighth)
                 .set(LFO_IDS[1][1], SampleAndHold.to_index() as f32)
-                .touch()
-                .route(Lfo2, Geometry, 0.3),
-            // An envelope cycling as an LFO, retriggered by the note, sweeping Position.
-            Sound::new("Cycling position", Sequence, STRING)
-                .accent(-4.0)
-                .strike(0.8, plectrum(0.4), 0.5)
-                .resonator(0.25, 0.55, 0.5, 0.3)
+                .route(Lfo2, Geometry, 0.5)
+                .touch(),
+            // Random into Model: every note a different instrument.
+            Sound::new("Model roulette", Sequence, STRING)
+                .strike(0.8, plectrum(0.3), 0.6)
+                .resonator(0.35, 0.6, 0.45, 0.3)
+                .space(0.5)
+                .route(Random, Model, 0.67)
+                .touch(),
+            // An envelope cycling at 33 Hz on the breath: each note a ratchet of puffs.
+            Sound::new("Ratchet breath", Sequence, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.15, 0.5, 0.6)
+                .contour(0.8)
+                .resonator(0.6, 0.6, 0.6, 0.3)
                 .space(0.6)
-                .env(2, 0.05, 0.08, 0.5, 0.1)
-                .cycling(2)
-                .touch()
-                .route(Envelope2, Position, 0.3),
-            // Fx.
-            Sound::new("Particle rain", Fx, MODAL)
-                .accent(2.0)
-                .strike(0.8, particles(0.6), 0.6)
-                .resonator(0.6, 0.6, 0.5, 0.3)
-                .space(0.95),
-            Sound::new("Wind tunnel", Fx, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .blow(0.05, 0.9, 0.8)
-                .contour(0.6)
-                .resonator(0.7, 0.55, 0.6, 0.35)
-                .space(0.98),
-            Sound::new("Space gong", Fx, MODAL)
-                .accent(8.5)
-                .strike(0.85, mallet(0.4), 0.3)
-                .resonator(0.95, 0.4, 0.65, 0.3)
-                .space(1.0),
-            // A slot on Model picks each note's model: the softer the note, the further it moves
-            // from the modal resonator to the string and the strings.
-            Sound::new("Model by touch", Fx, MODAL)
-                .accent(6.0)
-                .strike(0.8, plectrum(0.2), 0.55)
-                .resonator(0.3, 0.55, 0.45, 0.3)
-                .space(0.7)
-                .route(Velocity, Model, -0.7),
-            // Follow: a lag on the contour, so the brightness lingers after each swell.
-            Sound::new("Lingering glow", Fx, MODAL)
-                .accent(13.0)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.6, 0.5)
-                .contour(0.5)
-                .resonator(0.5, 0.4, 0.65, 0.3)
-                .space(0.85)
-                .env(2, 0.5, 0.3, 0.7, 1.5)
-                .env_mode(2, Follow)
-                .route(Contour, Envelope2Input, 1.0)
-                .route(Envelope2, Brightness, 0.4),
-            // An envelope cycling while the note is held: the bow breathes, and so does the room.
-            Sound::new("Breathing metal", Fx, MODAL)
-                .strike(0.0, mallet(0.5), 0.5)
-                .bow(0.35, 0.5)
-                .contour(0.6)
-                .resonator(0.8, 0.5, 0.65, 0.3)
-                .space(0.9)
-                .env(1, 0.6, 0.6, 0.0, 0.6)
+                .env(1, 0.01, 0.02, 0.0, 0.02)
                 .cycling(1)
-                .route(Envelope1, Bow, 0.4)
-                .route(Envelope1, Space, 0.1),
-            Sound::new("Ghost voice", Fx, DARK)
-                .strike(1.0, 0.45, 0.45)
-                .blow(1.0, 0.45, 0.45)
-                .contour(0.65)
-                .resonator(0.4, 0.65, 0.55, 0.5)
+                .route(Envelope1, Blow, 0.5),
+            // Random into Pitch: each note lands somewhere in an octave either side.
+            Sound::new("Pitch rain", Sequence, MODAL)
+                .strike(0.8, mallet(0.8), 0.7)
+                .resonator(0.6, 0.7, 0.45, 0.3)
+                .space(0.7)
+                .route(Random, Pitch, 1.0)
+                .route(Random, Geometry, 0.2)
+                .touch(),
+            // Fx.
+            // Two octaves down in 0.4 s on a fed-back FM voice: a laser.
+            Sound::new("Laser", Fx, DARK)
+                .strike(0.25, 0.5, 0.7)
+                .blow(0.25, 0.5, 0.6)
+                .bow(0.0, 0.7)
+                .contour(0.75)
+                .resonator(0.05, 0.85, 0.4, 0.3)
+                .space(0.5)
+                .drop(24.0, 0.4),
+            // A sample-and-hold on Pitch at 12 Hz: the voice babbles while the key is held.
+            Sound::new("Computer babble", Fx, DARK)
+                .strike(0.0, 0.5, 0.3)
+                .blow(0.27, 0.5, 0.3)
+                .bow(0.0, 0.2)
+                .contour(0.75)
+                .resonator(0.05, 0.7, 0.4, 0.3)
+                .space(0.4)
+                .lfo(1, 12.0, SampleAndHold)
+                .route(Lfo1, Pitch, 1.0),
+            // A plate bowed two octaves down: thunder.
+            Sound::new("Thunder sheet", Fx, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.6, 0.2)
+                .contour(0.6)
+                .resonator(0.0, 0.25, 0.8, 0.3)
+                .coarse(-24.0)
                 .space(0.85)
-                .lfo(1, 0.3, SmoothRandom)
-                .retriggered(1)
-                .route(Lfo1, Flow, 0.2)
-                .route(Lfo1, Pan, 0.4),
-            Sound::new("Damped thuds", Fx, MODAL)
-                .accent(14.0)
-                .strike(0.9, hits(0.95), 0.4)
-                .resonator(0.6, 0.45, 0.35, 0.3)
-                .space(0.75)
-                .touch()
-                .route(Velocity, Damping, 0.3),
+                .lfo(2, 0.5, SmoothRandom)
+                .route(Lfo2, Bow, 0.3),
+            // One strike, and the room frozen on it while the key is held.
+            Sound::new("Frozen stab", Fx, MODAL)
+                .accent(9.0)
+                .strike(0.85, mallet(0.6), 0.7)
+                .resonator(0.6, 0.6, 0.5, 0.3)
+                .space(0.95)
+                .env(1, 0.05, 0.1, 1.0, 1.0)
+                .route(Envelope1, Space, 0.45)
+                .touch(),
+            // The pickup sweeping fast through the modes: a comb filter underwater.
+            Sound::new("Underwater", Fx, MODAL)
+                .strike(0.0, mallet(0.5), 0.5)
+                .blow(0.4, 0.5, 0.4)
+                .contour(0.6)
+                .resonator(0.4, 0.2, 0.7, 0.3)
+                .space(0.7)
+                .lfo(1, 7.0, Triangle)
+                .route(Lfo1, Position, 0.5),
+            // Pan swinging side to side, the pitch bending with it: a doppler fly-by.
+            Sound::new("Doppler", Fx, STRING)
+                .accent(3.0)
+                .strike(0.0, mallet(0.5), 0.5)
+                .bow(0.7, 0.5)
+                .contour(0.6)
+                .resonator(0.3, 0.6, 0.6, 0.3)
+                .space(0.5)
+                .lfo(2, 0.4, Triangle)
+                .route(Lfo2, Pan, 1.0)
+                .route(Lfo2, Pitch, 0.04),
         ];
         let mut sounds = sounds;
         let rank = |c: Category| Category::ALL.iter().position(|&a| a == c);
