@@ -55,6 +55,10 @@ mxm-modal-voice, which commits only the harness's cases and its outputs' SHA-256
 - **Elements' data ships as Elements has it**: the nine strike recordings, the noise and the tables,
   MIT as its code (the owner, 2026-11-05).
 - **The voice reads no files**, and its audio inputs stay silent (no input now, the owner's ruling).
+- **The bowed loops' limit is on** (`Voice::set_bowed_loop_limit`; the owner, 2026-11-13): struck,
+  Elements' bowed modes above 7.37 kHz ring louder without end, in 27 of the 30 modal factory
+  sounds; the limit holds them to the C++'s own loop gain. The one change from Elements' sound,
+  recorded in the DSP's `NOTES.md`; below 7.37 kHz every bit is the C++'s.
 
 ## The names
 
@@ -72,7 +76,8 @@ product names).
 - **Every voice runs at 32 kHz**, as the module, and one rate converter (mxm-kit's
   `mxm_dsp::rate_converter`) takes the sum to the host's rate with a fixed, reported latency; at
   32 kHz nothing is converted.
-- **One voice is the module's part to the bit** (`one_voice_is_the_part_exactly`, all four models):
+- **One voice is the module's part to the bit** where no bowed mode is above the limit's 7.37 kHz
+  (`one_voice_is_the_part_exactly`, all four models):
   the instrument's part is `Part::Process` for many voices, the resonators into one soft limit, the
   hidden voices after it, one reverb.
 - **Thanks EG's modules are copies** (the owner, 2026-11-05): the envelopes, the LFOs, the route

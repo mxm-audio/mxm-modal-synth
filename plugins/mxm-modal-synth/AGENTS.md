@@ -113,7 +113,8 @@ every parameter's binding), `editor/route_rows.rs` (the slots as rows), `editor/
 - **The set's levels are `tests/factory_levels.rs`**: each file loaded as a host loads it, played
   as its category is (at 120 bpm), its BS.1770 momentary loudness at its loudest within `WINDOW_LU`
   of the set's median, no sample past full scale, and silent within `ENDS_WITHIN` of its key going
-  up. **Balanced in the sound, never by Volume** (`factory_content_does_not_move_volume`): a struck
+  up; and silent within it at a key Elements runs away at, one for each of the 22 sounds it runs
+  away in (`RUNAWAYS`; the DSP's `NOTES.md`). **Balanced in the sound, never by Volume** (`factory_content_does_not_move_volume`): a struck
   sound by its accent (`Sound::accent`, Envelope 3 into Strength); a bowed or blown one by its
   levels and timbres, never cut by the accent, which would swell on release (`designed` holds it);
   the dark FM voice by its oscillators' levels and its filter's mode (Geometry).

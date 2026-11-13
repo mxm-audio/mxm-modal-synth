@@ -192,11 +192,12 @@ pub(crate) struct Voice {
 }
 
 impl Voice {
-    /// Voice `index`: its engines, each as `Part::Init` leaves it, and its LFOs' random streams,
-    /// each its own.
+    /// Voice `index`: its engines, each as `Part::Init` leaves it but for the bowed loops' limit
+    /// (a recorded deviation, `NOTES.md`), and its LFOs' random streams, each its own.
     pub(crate) fn new(index: usize) -> Self {
         let mut engine = Engine::new();
         engine.init();
+        engine.set_bowed_loop_limit(true);
         let mut hidden = OminousVoice::new();
         hidden.init();
         Self {
@@ -238,6 +239,7 @@ impl Voice {
     pub(crate) fn clear(&mut self) {
         self.engine.clear();
         self.engine.init();
+        self.engine.set_bowed_loop_limit(true);
         self.hidden.clear();
         self.hidden.init();
         self.fresh = true;

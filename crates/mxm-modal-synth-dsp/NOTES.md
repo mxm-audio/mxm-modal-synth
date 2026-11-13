@@ -56,6 +56,30 @@ once the voice's gated outputs have been silent for the idle time, the drone fad
 would never end. While the key is held the drone sounds, as on the module. Kept by the owner
 (2026-11-05).
 
+## The bowed loops' limit: a recorded deviation
+
+Elements' modal resonator runs its eight bowed modes whether or not the bow plays, and above 7.37 kHz
+(0.2304 of its 32 kHz) the bow table's feedback lifts a bowed mode's loop past a gain of one: struck,
+the mode grows instead of decaying, as it does in the C++ (mxm-modal-voice's `NOTES.md` has the
+loop). The owner's song found it (2026-11-13: a toy piano on *Tin plate keys* whistling on at
+10.4 kHz from D7). Every voice turns on the port's limit, which holds each bowed loop to the C++'s
+own gain of 0.99 (the owner: *"Yes do it that way"*).
+
+Measured on the factory sounds (single notes, C0 to C9 in quarter tones, against the C++): without
+it, 27 of the 30 on the modal resonator run away at some pitch, from E3 up in most, from F♯2 in
+Tin hat; with it, none. Below C3, 98 % of the notes are bit for bit the C++'s; from C3 to B4, 77 %;
+above C6 almost every note differs, but by 50 to 90 dB under the sound. What can be heard: on a
+few high notes (Clang snare and Glass shards at B6, Kalimba at C♯6, Tin hat at B8), a mode near
+7.5 to 8 kHz the C++ leaves ringing for seconds dies with the rest, 26 to 30 dB under the sound.
+`factory_levels.rs`'s `no_factory_sound_rings_on_where_elements_runs_away` plays each of the 22
+factory sounds that run away at a whole key at one such key, and fails at every one with the limit
+off.
+
+The song's toy piano, rendered again (141 s): the 10.4 kHz line, which made the track 16 dB
+louder in all, is gone; below 7 kHz, where the runaway was quiet, the track is the same to 45 to 70 dB.
+Where it was loud it had held voices and driven the shared soft limit, so the music under it
+differs there too.
+
 ## The guard
 
 A string with Damping at its top crossfades to an infinite decay and never ends on its own. A

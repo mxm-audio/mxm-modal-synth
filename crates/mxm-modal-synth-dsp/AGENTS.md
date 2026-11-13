@@ -41,6 +41,8 @@ reaches, the grid), `settings.rs` (the kept settings). Tests: `src/tests.rs`,
   none is dropped. An event naming a note id acts on the voice playing it; one without, or on a voice
   without one, on its key. A non-finite velocity is 1; a non-finite tuning is dropped; a new note
   clears the tuning.
+- **The bowed loops' limit is on** in every voice's engine, set after each `init`
+  (`Engine::set_bowed_loop_limit`): a recorded deviation, NOTES.md.
 - **A voice is the module with the case around it.** Per engine block of 16 samples at 32 kHz:
   the routing is evaluated (below) and each control, with its slots, constrained as the module's
   `cv_scaler.cc` does (0.9995; Strike timbre 0.995; Space 2; a pot without a CV, Contour and the
@@ -76,7 +78,8 @@ both channels, ramped across the block); **the resonator voices summed into one 
 hidden voices added after it** (the module leaves its hidden voice unlimited); **one reverb**,
 following the newest voice's Space; `SoftConvert` to the module's frames, read as `frame / 32 768`
 times Volume, the module's right channel (main) on the right. A group with no voice in it adds
-nothing, so one voice of either kind is `Part` to the bit (`one_voice_is_the_part_exactly`).
+nothing, so one voice of either kind is `Part` to the bit (`one_voice_is_the_part_exactly`),
+wherever the bowed loops' limit leaves it the C++'s (below 7.37 kHz).
 `Part`'s metering and panic stand: a mix past 200 resets every resonator the next block. The
 reverb's tail sounds until 1 000 blocks of silent frames (0.5 s, past its longest delay).
 
@@ -157,7 +160,7 @@ library; `tests/realtime.rs` counts allocations with its own allocator.
   collection's instruments are. Its one link to the voice's reference is
   `one_voice_is_the_part_exactly`, for all four models.
 - The voice's additions for a host (`envelope`, `random_mut`, `clear`, on the voice and the hidden
-  voice) are listed in mxm-modal-voice's `AGENTS.md`; `init`, `set_resonator_model` and `panic` are
+  voice, and `set_bowed_loop_limit`) are listed in mxm-modal-voice's `AGENTS.md`; `init`, `set_resonator_model` and `panic` are
   the C++'s. Add one there only when nothing here can know it.
 
 # Verification

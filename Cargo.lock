@@ -2475,7 +2475,7 @@ dependencies = [
 [[package]]
 name = "mxm-modal-voice"
 version = "0.1.0"
-source = "git+https://github.com/mxm-audio/mxm-modal-voice?branch=main#5b5c1cc841a3647a1680d261ec369c5bbd663bcb"
+source = "git+https://github.com/mxm-audio/mxm-modal-voice?branch=main#80b76a7a0905038e2903a6b33eb2158f90028d64"
 
 [[package]]
 name = "mxm-modulation"

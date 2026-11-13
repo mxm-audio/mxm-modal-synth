@@ -60,6 +60,8 @@ fn sounding(instrument: &Instrument) -> usize {
 /// module's part is driven with what the voice handed its engine each block (its patch, the gate
 /// a block after the note, its pitch and strength), and the patch's fields no knob sets are
 /// `Part::Init`'s. Compared while the voice sounds; once it is idle the module's part would run on.
+/// The voices' bowed loops' limit changes nothing here: no bowed mode of these notes is above its
+/// 7.37 kHz.
 #[test]
 fn one_voice_is_the_part_exactly() {
     let mut reference = ModulePart::new();

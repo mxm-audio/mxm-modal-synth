@@ -29,6 +29,11 @@ it was designed from, is ops' `plans/plan-elements.md`; Pi reviewed it in three 
   synthesis voice. Emilie Gillet's *Guidelines for derivative works* ask that "Mutable Instruments"
   not be used on derivative works and recommend not keeping a module's name, so "Elements" names
   the original in `NOTICE.md` and the README only.
+- **2026-11-13: The bowed loops' limit.** A toy piano in the owner's song (*Tin plate keys*, near
+  D7) whistled on at 10 to 12 kHz: a bowed mode running away, as it does in Elements' C++. The
+  owner: *"i feel we need to fix this at the source. How much will it change the sound?"*, then,
+  on the measurements (the DSP's `NOTES.md`), *"Yes do it that way"*: the limit in
+  mxm-modal-voice, off there unless a host turns it on, and on here.
 - **2026-11-05: The recordings.** *"they are released with the projects so we considder them MIT as
   well."* The nine strike recordings and the noise ship as Elements has them.
 - **2026-11-05: No audio input now**, as the conventions have an instrument; the module's inputs

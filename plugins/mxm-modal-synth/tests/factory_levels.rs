@@ -18,6 +18,9 @@
 //! ```
 //!
 //! prints each sound's loudness, peak and how long it rang on.
+//!
+//! **And none rings on up high**: each factory sound Elements' C++ runs away in, played at a key
+//! it runs away at, ends as every sound must (the voice's bowed loops' limit, `NOTES.md`).
 
 use mxm_modal_synth::params::ModalSynthParams;
 use mxm_modal_synth::preset::factory_folder;
@@ -331,5 +334,61 @@ fn every_factory_sound_sits_in_the_sets_loudness_window() {
     assert!(
         outside.is_empty(),
         "outside ±{WINDOW_LU} LU of the median ({median:.1} LUFS): {outside:?}"
+    );
+}
+
+/// **The keys Elements' C++ runs away at**, one per factory sound it runs away in: struck, a
+/// bowed mode above 7.37 kHz rings louder without end (2026-11-13, a sweep of every modal sound
+/// in quarter tones, C0 to C9; the loudest runaway at a whole key, and Tin plate keys at the D7 of
+/// the song that found it).
+const RUNAWAYS: [(&str, u8); 22] = [
+    ("clang-snare.json", 113),
+    ("duck-call.json", 111),
+    ("flam-tom.json", 111),
+    ("freeze-bloom.json", 86),
+    ("frozen-bells.json", 53),
+    ("frozen-stab.json", 80),
+    ("gamelan.json", 70),
+    ("glass-shards.json", 88),
+    ("kalimba.json", 90),
+    ("log-drum.json", 112),
+    ("pitch-rain.json", 93),
+    ("prepared-piano.json", 94),
+    ("ratchet-breath.json", 96),
+    ("scraped-metal.json", 47),
+    ("slide-trombone.json", 97),
+    ("thunder-sheet.json", 121),
+    ("tin-hat.json", 40),
+    ("tin-plate-keys.json", 98),
+    ("tube-fanfare.json", 106),
+    ("underwater.json", 92),
+    ("wind-organ.json", 106),
+    ("wooden-sub.json", 120),
+];
+
+/// **No factory sound rings on at a key Elements runs away at**: each, its key held 0.4 s (3 s
+/// for a bowed or blown sound, so the exciter builds), is silent within [`ENDS_WITHIN`].
+#[test]
+fn no_factory_sound_rings_on_where_elements_runs_away() {
+    let mut rang_on = Vec::new();
+    for (file, key) in RUNAWAYS {
+        let params = loaded(file);
+        let held = if params.bow.value() > 0.0 || params.blow.value() > 0.0 {
+            3.0
+        } else {
+            0.4
+        };
+        let (_, ended) = render(&params, &[note(key, 0.0, held)], held + 1.0, true);
+        println!(
+            "{file:22} key {key:3}  silent {:4.1} s after",
+            ended.unwrap_or(f32::INFINITY)
+        );
+        if ended.is_none() {
+            rang_on.push(format!("{file} at key {key}"));
+        }
+    }
+    assert!(
+        rang_on.is_empty(),
+        "still sounding {ENDS_WITHIN} s after the key is let go: {rang_on:?}"
     );
 }

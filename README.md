@@ -10,7 +10,9 @@ string or a set of strings tuned to a chord, and a dark FM voice beside them; on
 Per voice three envelopes, each also a function generator (cycling, gated, or following another
 signal), and three LFOs; sixteen route slots from nineteen sources to forty targets; sixty
 factory sounds. The voice is held bit for bit to the code it was ported from; the port is its own
-crate, [mxm-modal-voice](https://github.com/mxm-audio/mxm-modal-voice) (MIT).
+crate, [mxm-modal-voice](https://github.com/mxm-audio/mxm-modal-voice) (MIT). One fix is turned on:
+a struck mode above about 7.4 kHz, which in the original can ring louder without end, dies away
+here like the rest.
 `cargo xtask bundle mxm-modal-synth --release` builds and installs the CLAP and VST3.
 
 Pre-alpha: nothing is released yet. The sounds and the parameters are settled; the parameters are
