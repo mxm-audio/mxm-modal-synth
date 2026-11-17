@@ -44,6 +44,8 @@ it was designed from, is ops' `plans/plan-elements.md`; Pi reviewed it in three 
   Thanks EG's, copied, so each instrument can change its own. Only the rate converter moved into
   mxm-kit's `mxm-dsp`, shared with Thanks EG (the owner, 2026-11-05: "move it into the kit"; and
   "Rate converter is more correct", the drum machines' Resample being another thing).
+- **2026-11-17: In version 1.0.** Asked which of the instruments begun since 2026-11-02 are in
+  version 1.0 of the collection: *"mxm-twf-synth is not ready yet. The rest are."*
 
 ## The editor
 

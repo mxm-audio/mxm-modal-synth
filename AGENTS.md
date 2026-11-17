@@ -22,7 +22,7 @@ three known Windows preset-path failures (below). E5 is done: the owner approved
 and the parameters are frozen (2026-11-05). It runs in Bitwig, CLAP and VST3 (2026-11-05,
 `NOTES.md`), and the owner has ruled on its open points. **Public since 2026-11-05** (the owner: *"publish this
 synth too"*), with mxm-modal-voice; nothing is released before version 1.0 of the MXM collection,
-and the instrument comes after it.
+and the instrument is in it (the owner, 2026-11-17).
 
 # Ownership
 
