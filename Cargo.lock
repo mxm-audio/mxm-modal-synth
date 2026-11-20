@@ -1183,7 +1183,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab8ecd87370524b461f8557c119c405552c396ed91fc0a8eec68679eab26f94a"
 dependencies = [
- "libloading 0.8.9",
+ "libloading 0.7.4",
 ]
 
 [[package]]
@@ -1285,7 +1285,7 @@ dependencies = [
 [[package]]
 name = "egui-baseview"
 version = "0.7.2"
-source = "git+https://github.com/mxm-audio/egui-baseview?branch=main#362c13629e0145370b412198e5f8e8b4daca3835"
+source = "git+https://github.com/mxm-audio/egui-baseview?branch=main#7182312e969a64b31d562463f15ce8262cf10d07"
 dependencies = [
  "baseview",
  "copypasta",
@@ -4972,7 +4972,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
